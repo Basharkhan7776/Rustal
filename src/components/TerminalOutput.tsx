@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Terminal as TerminalIcon,
   CheckCircle2,
@@ -9,12 +9,18 @@ import {
   ChevronUp,
   ArrowRight,
   Loader2,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import { useRustlings } from '../context/RustlingsContext';
 import { parseAnsi } from '../lib/ansi';
 import { formatTime } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Tooltip } from './ui/Tooltip';
+import {
+  getStoredTerminalFontSize,
+  setStoredTerminalFontSize,
+} from '../lib/storage';
 
 export interface TerminalOutputProps {
   height: number;
@@ -28,6 +34,25 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
   onToggleCollapse,
 }) => {
   const { isRunning, lastResult, clearLastResult, nextExercise, getShortcut } = useRustlings();
+
+  // Terminal font size adjustment (10px to 20px)
+  const [fontSize, setFontSize] = useState<number>(() => getStoredTerminalFontSize(12));
+
+  const handleZoomIn = () => {
+    setFontSize(prev => {
+      const next = Math.min(prev + 1, 20);
+      setStoredTerminalFontSize(next);
+      return next;
+    });
+  };
+
+  const handleZoomOut = () => {
+    setFontSize(prev => {
+      const next = Math.max(prev - 1, 10);
+      setStoredTerminalFontSize(next);
+      return next;
+    });
+  };
 
   const combinedOutput = useMemo(() => {
     if (!lastResult) return '';
@@ -108,6 +133,29 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
             </Tooltip>
           )}
 
+          {/* Font size zoom controls */}
+          <div className="flex items-center gap-0.5 bg-zinc-900 border border-zinc-800 rounded px-1">
+            <Tooltip content="Decrease Font Size">
+              <button
+                onClick={handleZoomOut}
+                disabled={fontSize <= 10}
+                className="p-1 hover:text-zinc-200 text-zinc-400 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ZoomOut className="w-3 h-3 text-zinc-400" />
+              </button>
+            </Tooltip>
+            <span className="text-[10px] font-mono px-1 text-zinc-400">{fontSize}px</span>
+            <Tooltip content="Increase Font Size">
+              <button
+                onClick={handleZoomIn}
+                disabled={fontSize >= 20}
+                className="p-1 hover:text-zinc-200 text-zinc-400 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ZoomIn className="w-3 h-3 text-zinc-400" />
+              </button>
+            </Tooltip>
+          </div>
+
           <Tooltip
             content={collapsed ? 'Expand terminal' : 'Collapse terminal'}
             shortcut={getShortcut('⌘T', 'Ctrl+T')}
@@ -128,7 +176,10 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
 
       {/* Terminal Body */}
       {!collapsed && (
-        <div className="flex-1 p-3 overflow-y-auto font-mono text-[12px] leading-relaxed text-zinc-300 bg-[#08080a] select-text">
+        <div
+          style={{ fontSize: `${fontSize}px` }}
+          className="flex-1 p-3 overflow-y-auto font-mono leading-relaxed text-zinc-300 bg-[#08080a] select-text"
+        >
           {isRunning ? (
             <div className="flex items-center gap-2 text-zinc-400 py-3 font-sans text-xs">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />

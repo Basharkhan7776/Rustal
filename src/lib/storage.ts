@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   SETTINGS: 'rustal_v1_settings',
   ACTIVITY: 'rustal_v1_activity_history',
   INSTRUCTIONS_FONT_SIZE: 'rustal_v1_instructions_font_size',
+  TERMINAL_FONT_SIZE: 'rustal_v1_terminal_font_size',
 };
 
 export function detectPlatform(): 'mac' | 'windows' {
@@ -182,6 +183,24 @@ export function getStoredInstructionsFontSize(defaultSize = 13): number {
 export function setStoredInstructionsFontSize(size: number): void {
   try {
     localStorage.setItem(STORAGE_KEYS.INSTRUCTIONS_FONT_SIZE, size.toString());
+  } catch {}
+}
+
+// Terminal Font Size
+export function getStoredTerminalFontSize(defaultSize = 12): number {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.TERMINAL_FONT_SIZE);
+    if (!raw) return defaultSize;
+    const parsed = parseInt(raw, 10);
+    return isNaN(parsed) ? defaultSize : Math.max(10, Math.min(parsed, 20));
+  } catch {
+    return defaultSize;
+  }
+}
+
+export function setStoredTerminalFontSize(size: number): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.TERMINAL_FONT_SIZE, size.toString());
   } catch {}
 }
 
