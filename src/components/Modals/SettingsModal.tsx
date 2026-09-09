@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   HardDrive,
   Keyboard,
-  Info,
 } from 'lucide-react';
 import { useRustlings } from '../../context/RustlingsContext';
 import { exportProgressSnapshot, importProgressSnapshot } from '../../lib/storage';
@@ -237,14 +236,6 @@ export const SettingsModal: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-
-        {/* About Info */}
-        <div className="p-2.5 rounded-lg bg-zinc-950/60 border border-zinc-800/60 text-[10px] text-zinc-400 flex items-start gap-2">
-          <Info className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
-          <div>
-            Rustal runs 100% locally in your browser. Rust code is verified through the official Rust Playground API or local toolchain. UI inspired by <span className="text-zinc-200 font-semibold">coss.com</span> and <span className="text-zinc-200 font-semibold">shadcn/ui</span>.
-          </div>
         </div>
       </div>
     </Modal>

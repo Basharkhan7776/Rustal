@@ -7,7 +7,7 @@ import { Flame, Calendar, Award, CheckCircle2 } from 'lucide-react';
 export const ActivityHeatmap: React.FC = () => {
   const { activityHistory, completedCount } = useRustlings();
 
-  // Generate grid for past 24 weeks (~168 days)
+  // 52 weeks (364 days, full year) stretching end-to-end of the card
   const { weeks, stats } = useMemo(() => {
     const today = new Date();
     const days: Array<{
@@ -17,7 +17,7 @@ export const ActivityHeatmap: React.FC = () => {
       dayOfWeek: number; // 0 = Sun, 6 = Sat
     }> = [];
 
-    const TOTAL_DAYS = 24 * 7; // 168 days
+    const TOTAL_DAYS = 52 * 7; // 364 days
     for (let i = TOTAL_DAYS - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
@@ -36,7 +36,7 @@ export const ActivityHeatmap: React.FC = () => {
       });
     }
 
-    // Group into weeks of 7 days
+    // Group into 52 weeks of 7 days
     const weekCols: Array<typeof days> = [];
     let currentWeek: typeof days = [];
 
@@ -58,7 +58,6 @@ export const ActivityHeatmap: React.FC = () => {
     let longestStreak = 0;
     let tempStreak = 0;
 
-    // Check sorted dates for streaks
     const todayStr = today.toISOString().slice(0, 10);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -73,7 +72,6 @@ export const ActivityHeatmap: React.FC = () => {
       }
     });
 
-    // Calculate current streak backward from today or yesterday
     let checkDate = new Date(today);
     if ((activityHistory[todayStr] || 0) === 0 && (activityHistory[yesterdayStr] || 0) > 0) {
       checkDate = yesterday;
@@ -89,7 +87,6 @@ export const ActivityHeatmap: React.FC = () => {
       }
     }
 
-    // Longest streak
     days.forEach(day => {
       if (day.count > 0) {
         tempStreak++;
@@ -110,16 +107,17 @@ export const ActivityHeatmap: React.FC = () => {
     };
   }, [activityHistory, completedCount]);
 
+  // Authentic Rust Color Palette: Deep Rust -> Terracotta -> Warm Rust -> Rust Orange
   const getColorClass = (count: number) => {
-    if (count === 0) return 'bg-zinc-900 border-zinc-800/80';
-    if (count <= 2) return 'bg-emerald-950/70 border-emerald-800/60 text-emerald-300';
-    if (count <= 4) return 'bg-emerald-800 border-emerald-600 text-emerald-200';
-    if (count <= 6) return 'bg-emerald-600 border-emerald-500 text-white';
-    return 'bg-emerald-400 border-emerald-300 text-zinc-950 font-bold';
+    if (count === 0) return 'bg-[#18181b] border-zinc-800/80';
+    if (count <= 2) return 'bg-[#431407]/90 border-[#7c2d12] text-orange-200';
+    if (count <= 4) return 'bg-[#9a3412] border-[#c2410c] text-orange-100';
+    if (count <= 6) return 'bg-[#ea580c] border-[#f97316] text-white';
+    return 'bg-[#f97316] border-orange-400 text-white shadow-xs shadow-orange-500/30';
   };
 
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-3">
       {/* Metrics Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         <div className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center gap-2.5">
@@ -167,28 +165,31 @@ export const ActivityHeatmap: React.FC = () => {
         </div>
       </div>
 
-      {/* Heatmap Grid Card */}
+      {/* Heatmap Grid Card: Spans End-to-End Across the Card */}
       <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-3">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-zinc-200">Practice Activity (Last 24 Weeks)</span>
+          <span className="font-semibold text-zinc-200">Practice Activity (Last 52 Weeks)</span>
           <span className="text-[11px] text-zinc-500 font-mono">Saved locally in browser</span>
         </div>
 
-        <div className="overflow-x-auto pb-1">
-          <div className="inline-flex flex-col gap-1 min-w-full">
-            {/* Days Grid: 7 rows for Sun..Sat */}
-            <div className="flex gap-1">
-              {/* Day of week labels */}
-              <div className="flex flex-col gap-1 pr-1 text-[9px] text-zinc-500 font-mono justify-between select-none">
-                <span className="h-3 leading-3">Sun</span>
-                <span className="h-3 leading-3">Tue</span>
-                <span className="h-3 leading-3">Thu</span>
-                <span className="h-3 leading-3">Sat</span>
-              </div>
+        {/* End-to-End Responsive Container */}
+        <div className="w-full">
+          <div className="flex w-full items-center gap-1.5">
+            {/* Day of week labels on left */}
+            <div className="flex flex-col gap-[3px] pr-0.5 text-[9px] text-zinc-500 font-mono select-none shrink-0">
+              <span className="h-2.5 leading-2.5">Sun</span>
+              <span className="h-2.5 leading-2.5"></span>
+              <span className="h-2.5 leading-2.5">Tue</span>
+              <span className="h-2.5 leading-2.5"></span>
+              <span className="h-2.5 leading-2.5">Thu</span>
+              <span className="h-2.5 leading-2.5"></span>
+              <span className="h-2.5 leading-2.5">Sat</span>
+            </div>
 
-              {/* Columns of weeks */}
+            {/* 52 Columns flex-stretched end-to-end */}
+            <div className="flex flex-1 justify-between gap-[3px] min-w-0">
               {weeks.map((week, wIdx) => (
-                <div key={wIdx} className="flex flex-col gap-1">
+                <div key={wIdx} className="flex flex-1 flex-col gap-[3px] min-w-0">
                   {week.map(day => (
                     <Tooltip
                       key={day.date}
@@ -197,7 +198,7 @@ export const ActivityHeatmap: React.FC = () => {
                     >
                       <div
                         className={cn(
-                          'w-3 h-3 rounded-[3px] border transition-colors cursor-pointer hover:ring-1 hover:ring-zinc-400',
+                          'w-full aspect-square rounded-[2px] border transition-colors cursor-pointer hover:ring-1 hover:ring-zinc-300',
                           getColorClass(day.count)
                         )}
                       />
@@ -209,16 +210,16 @@ export const ActivityHeatmap: React.FC = () => {
           </div>
         </div>
 
-        {/* Legend */}
+        {/* Legend in Rust Colors */}
         <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-1 border-t border-zinc-800/50">
           <span>{stats.activeDays} days with completed exercises</span>
           <div className="flex items-center gap-1.5">
             <span>Less</span>
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-zinc-900 border border-zinc-800/80" />
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-950/70 border border-emerald-800/60" />
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-800 border border-emerald-600" />
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-600 border border-emerald-500" />
-            <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-400 border border-emerald-300" />
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-[#18181b] border border-zinc-800/80" />
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-[#431407]/90 border border-[#7c2d12]" />
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-[#9a3412] border border-[#c2410c]" />
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-[#ea580c] border border-[#f97316]" />
+            <div className="w-2.5 h-2.5 rounded-[2px] bg-[#f97316] border border-orange-400" />
             <span>More</span>
           </div>
         </div>
