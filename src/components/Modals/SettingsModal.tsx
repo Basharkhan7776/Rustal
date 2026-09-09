@@ -13,6 +13,7 @@ import { useRustlings } from '../../context/RustlingsContext';
 import { exportProgressSnapshot, importProgressSnapshot } from '../../lib/storage';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { ActivityHeatmap } from '../ActivityHeatmap';
 
 export const SettingsModal: React.FC = () => {
   const {
@@ -20,9 +21,6 @@ export const SettingsModal: React.FC = () => {
     setShowSettingsModal,
     settings,
     updateSettings,
-    completedCount,
-    totalCount,
-    bookmarkedIds,
     resetAllProgress,
   } = useRustlings();
 
@@ -80,15 +78,18 @@ export const SettingsModal: React.FC = () => {
       title={
         <div className="flex items-center gap-2">
           <Settings className="w-4 h-4 text-zinc-400" />
-          <span>Settings & Local Storage</span>
+          <span>Dashboard & Settings</span>
         </div>
       }
-      description="Configure editor options and manage your local offline progress."
-      maxWidth="lg"
+      description="Practice activity heatmap, editor preferences, and local storage management."
+      maxWidth="3xl"
     >
-      <div className="space-y-5 text-xs text-zinc-300">
+      <div className="space-y-5 text-xs text-zinc-300 max-h-[80vh] overflow-y-auto pr-1">
+        {/* Practice Activity Heatmap */}
+        <ActivityHeatmap />
+
         {/* Editor Preferences */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <h4 className="font-semibold uppercase tracking-wider text-[10px] text-zinc-400 flex items-center gap-1.5">
             <Keyboard className="w-3 h-3 text-zinc-400" />
             Editor Preferences
@@ -96,7 +97,7 @@ export const SettingsModal: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Font Size */}
-            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80 flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between">
               <div>
                 <span className="font-medium text-zinc-200 block">Editor Font Size</span>
                 <span className="text-[11px] text-zinc-400">Current: {settings.fontSize}px</span>
@@ -106,7 +107,7 @@ export const SettingsModal: React.FC = () => {
                   <button
                     key={size}
                     onClick={() => updateSettings({ fontSize: size })}
-                    className={`px-2 py-1 rounded text-[11px] font-mono transition-colors ${
+                    className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors ${
                       settings.fontSize === size
                         ? 'bg-zinc-100 text-zinc-900 font-bold'
                         : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
@@ -119,7 +120,7 @@ export const SettingsModal: React.FC = () => {
             </div>
 
             {/* Vim Keybindings Toggle */}
-            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80 flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="font-medium text-zinc-200">Vim Keybindings</span>
@@ -146,25 +147,21 @@ export const SettingsModal: React.FC = () => {
         </div>
 
         {/* Data Persistence & Backup */}
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <h4 className="font-semibold uppercase tracking-wider text-[10px] text-zinc-400 flex items-center gap-1.5">
             <HardDrive className="w-3 h-3 text-zinc-400" />
             Local Progress & Backup
           </h4>
 
-          <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80 space-y-3">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-zinc-400">Curriculum Solved:</span>
-              <span className="font-mono text-zinc-200 font-semibold">
-                {completedCount} / {totalCount} ({Math.round((completedCount / totalCount) * 100)}%)
+          <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span className="font-medium text-zinc-200 block">Export or Import Your Data</span>
+              <span className="text-[11px] text-zinc-400">
+                Backup your completed exercises, written code, and practice heatmap as a single JSON file.
               </span>
             </div>
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-zinc-400">Bookmarked:</span>
-              <span className="font-mono text-zinc-200 font-semibold">{bookmarkedIds.size}</span>
-            </div>
 
-            <div className="pt-2 border-t border-zinc-800/60 flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
                 size="sm"
@@ -172,7 +169,7 @@ export const SettingsModal: React.FC = () => {
                 className="text-[11px] gap-1.5"
               >
                 <Download className="w-3.5 h-3.5 text-zinc-400" />
-                Export Progress (JSON)
+                Export JSON
               </Button>
 
               <input
@@ -189,12 +186,12 @@ export const SettingsModal: React.FC = () => {
                 className="text-[11px] gap-1.5"
               >
                 <Upload className="w-3.5 h-3.5 text-zinc-400" />
-                Import Progress
+                Import JSON
               </Button>
             </div>
 
             {importStatus && (
-              <div className="text-[11px] text-zinc-200 bg-zinc-850 p-2 rounded border border-zinc-700">
+              <div className="w-full text-[11px] text-zinc-200 bg-zinc-850 p-2 rounded border border-zinc-700">
                 {importStatus}
               </div>
             )}
@@ -207,8 +204,8 @@ export const SettingsModal: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <span className="font-medium text-zinc-300 block">Reset All Exercises</span>
-                <span className="text-[11px] text-zinc-400">
-                  Clears local code edits and marks all exercises pending.
+                <span className="text-[11px] text-zinc-500">
+                  Clears local code edits, completion records, and activity history.
                 </span>
               </div>
               <Button
@@ -228,7 +225,7 @@ export const SettingsModal: React.FC = () => {
                 Are you completely sure?
               </div>
               <p className="text-[11px] text-zinc-400">
-                This will delete all your local changes and completion records. You cannot undo this unless you've exported a backup.
+                This will delete all your local changes, completion records, and activity heatmap. You cannot undo this unless you have exported a backup.
               </p>
               <div className="flex items-center justify-end gap-2 pt-1">
                 <Button variant="ghost" size="sm" onClick={() => setConfirmReset(false)}>

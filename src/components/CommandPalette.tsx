@@ -63,8 +63,8 @@ const CommandPaletteDialog: React.FC = () => {
         className="relative w-full max-w-xl bg-[#121215] border border-zinc-800 rounded-xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh]"
         onKeyDown={handleKeyDown}
       >
-        {/* Search Input Bar */}
-        <div className="p-3 border-b border-zinc-800 flex items-center gap-2.5">
+        {/* Search Input Bar (Playground style) */}
+        <div className="p-3 border-b border-zinc-800 flex items-center gap-2.5 bg-[#0e0e11]">
           <Search className="w-4 h-4 text-zinc-400 shrink-0" />
           <input
             ref={inputRef}
@@ -75,7 +75,7 @@ const CommandPaletteDialog: React.FC = () => {
               setSelectedIndex(0);
             }}
             placeholder="Search exercises by name, topic, or file..."
-            className="flex-1 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none"
           />
           <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 text-zinc-400 rounded border border-zinc-700">
             ESC
@@ -85,7 +85,7 @@ const CommandPaletteDialog: React.FC = () => {
         {/* Results List */}
         <div ref={listRef} className="flex-1 overflow-y-auto p-2 space-y-1">
           {filtered.length === 0 ? (
-            <div className="py-8 text-center text-xs text-zinc-400">
+            <div className="py-8 text-center text-xs text-zinc-500">
               No matching exercises found for "{search}"
             </div>
           ) : (
@@ -104,28 +104,28 @@ const CommandPaletteDialog: React.FC = () => {
                   className={cn(
                     'px-3 py-2 rounded-lg flex items-center justify-between text-xs cursor-pointer transition-colors',
                     isSelected
-                      ? 'bg-orange-500/15 text-zinc-100 border border-orange-500/30'
-                      : 'text-zinc-300 hover:bg-zinc-800/40'
+                      ? 'bg-zinc-800 text-zinc-100 border border-zinc-700'
+                      : 'text-zinc-300 hover:bg-zinc-850/50'
                   )}
                 >
                   <div className="flex items-center gap-2.5 truncate">
                     {isDone ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-zinc-200 shrink-0" />
                     ) : (
-                      <Circle className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      <Circle className="w-3.5 h-3.5 text-zinc-600 shrink-0" />
                     )}
                     <div className="flex flex-col truncate">
                       <span className="font-medium text-zinc-100 truncate">{ex.title}</span>
-                      <span className="text-[10px] text-zinc-400 truncate">{ex.categoryTitle} • {ex.path}</span>
+                      <span className="text-[10px] text-zinc-500 truncate">{ex.categoryTitle} • {ex.path}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant={ex.mode === 'test' ? 'info' : 'warning'} size="sm">
+                    <Badge variant="outline" size="sm">
                       {ex.mode}
                     </Badge>
                     {isSelected && (
-                      <CornerDownLeft className="w-3.5 h-3.5 text-orange-400" />
+                      <CornerDownLeft className="w-3.5 h-3.5 text-zinc-300" />
                     )}
                   </div>
                 </div>
@@ -135,9 +135,9 @@ const CommandPaletteDialog: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="p-2.5 border-t border-zinc-800/80 bg-zinc-950/40 text-[11px] text-zinc-400 flex items-center justify-between">
+        <div className="p-2.5 border-t border-zinc-800/80 bg-zinc-950/40 text-[11px] text-zinc-500 flex items-center justify-between">
           <span>
-            Use <kbd className="px-1 font-mono bg-zinc-800 rounded">↑</kbd> <kbd className="px-1 font-mono bg-zinc-800 rounded">↓</kbd> to navigate, <kbd className="px-1 font-mono bg-zinc-800 rounded">Enter</kbd> to select
+            Use <kbd className="px-1 font-mono bg-zinc-850 text-zinc-400 rounded border border-zinc-800">↑</kbd> <kbd className="px-1 font-mono bg-zinc-850 text-zinc-400 rounded border border-zinc-800">↓</kbd> to navigate, <kbd className="px-1 font-mono bg-zinc-850 text-zinc-400 rounded border border-zinc-800">Enter</kbd> to select
           </span>
           <span className="font-mono">{filtered.length} exercises</span>
         </div>

@@ -159,24 +159,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </Tooltip>
       </div>
 
-      {/* Search Input */}
-      <div className="p-2 border-b border-zinc-800/60">
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+      {/* Search Input (Playground UI style) */}
+      <div className="p-2.5 border-b border-zinc-800/60">
+        <div className="relative flex items-center bg-[#121215] border border-zinc-800 rounded-lg px-2.5 py-1.5 focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-zinc-600/30 transition-all">
+          <Search className="w-3.5 h-3.5 text-zinc-400 mr-2 shrink-0 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Filter exercises..."
-            className="w-full bg-zinc-900/90 border border-zinc-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-700"
+            placeholder="Search exercises..."
+            className="w-full bg-transparent text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none"
           />
-          {searchQuery && (
+          {searchQuery ? (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-zinc-200"
+              className="text-xs text-zinc-400 hover:text-zinc-200 ml-1.5"
             >
               ✕
             </button>
+          ) : (
+            <kbd className="text-[10px] font-mono text-zinc-500 bg-zinc-850 px-1.5 py-0.5 rounded border border-zinc-800 shrink-0">
+              ⌘K
+            </kbd>
           )}
         </div>
 

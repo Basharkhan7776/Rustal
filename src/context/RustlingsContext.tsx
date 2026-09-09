@@ -14,6 +14,8 @@ import {
   setStoredBookmarks,
   getStoredSettings,
   saveStoredSettings,
+  getActivityHistory,
+  recordDailyActivity,
   clearAllLocalProgress,
 } from '../lib/storage';
 import { executeRustCode } from '../services/compiler';
@@ -40,6 +42,7 @@ interface RustlingsContextValue {
   clearLastResult: () => void;
   completedCount: number;
   totalCount: number;
+  activityHistory: Record<string, number>;
   filter: 'all' | 'pending' | 'completed' | 'bookmarked';
   setFilter: (f: 'all' | 'pending' | 'completed' | 'bookmarked') => void;
   searchQuery: string;
@@ -78,6 +81,10 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
 
   const [settings, setSettings] = useState<AppSettings>(() => {
     return getStoredSettings();
+  });
+
+  const [activityHistory, setActivityHistory] = useState<Record<string, number>>(() => {
+    return getActivityHistory();
   });
 
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -151,6 +158,8 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
         next.delete(id);
       } else {
         next.add(id);
+        const updatedActivity = recordDailyActivity();
+        setActivityHistory({ ...updatedActivity });
       }
       setStoredCompletedIds(Array.from(next));
       return next;
@@ -188,23 +197,23 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
       setLastResult(result);
 
       if (result.success) {
-        // Mark as completed
         setCompletedIds(prev => {
           if (!prev.has(currentExercise.id)) {
             const next = new Set(prev);
             next.add(currentExercise.id);
             setStoredCompletedIds(Array.from(next));
+            const updated = recordDailyActivity();
+            setActivityHistory({ ...updated });
             return next;
           }
           return prev;
         });
 
-        // Trigger celebratory confetti
         confetti({
           particleCount: 50,
           spread: 60,
           origin: { y: 0.8 },
-          colors: ['#f97316', '#22c55e', '#38bdf8', '#eab308'],
+          colors: ['#ffffff', '#a1a1aa', '#71717a', '#27272a'],
         });
       }
     } catch (e: any) {
@@ -225,6 +234,7 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     setCompletedIds(new Set());
     setBookmarkedIds(new Set());
     setUserCodes({});
+    setActivityHistory({});
     setCurrentId(exercises[0]?.id || 'intro1');
     setLastResult(null);
   }, []);
@@ -234,28 +244,24 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
 
-      // Cmd+Enter / Ctrl+Enter: Run
       if (isCmdOrCtrl && e.key === 'Enter') {
         e.preventDefault();
         runCode();
         return;
       }
 
-      // Cmd+K / Ctrl+K: Search palette
       if (isCmdOrCtrl && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setShowCommandPalette(prev => !prev);
         return;
       }
 
-      // Alt+ArrowRight: Next
       if (e.altKey && e.key === 'ArrowRight') {
         e.preventDefault();
         nextExercise();
         return;
       }
 
-      // Alt+ArrowLeft: Prev
       if (e.altKey && e.key === 'ArrowLeft') {
         e.preventDefault();
         prevExercise();
@@ -287,6 +293,7 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     clearLastResult: () => setLastResult(null),
     completedCount: completedIds.size,
     totalCount: exercises.length,
+    activityHistory,
     filter,
     setFilter,
     searchQuery,

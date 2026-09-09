@@ -7,6 +7,8 @@ const STORAGE_KEYS = {
   BOOKMARKS: 'rustal_v1_bookmarks',
   NOTES: 'rustal_v1_notes',
   SETTINGS: 'rustal_v1_settings',
+  ACTIVITY: 'rustal_v1_activity_history',
+  INSTRUCTIONS_FONT_SIZE: 'rustal_v1_instructions_font_size',
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -24,6 +26,7 @@ export interface LocalStorageSnapshot {
   bookmarks: string[];
   notes: Record<string, string>;
   settings: AppSettings;
+  activityHistory?: Record<string, number>;
 }
 
 export function getStoredCurrentExercise(fallbackId: string): string {
@@ -127,6 +130,46 @@ export function saveStoredSettings(settings: AppSettings): void {
   } catch {}
 }
 
+// Activity History for Practice Heatmap
+export function getActivityHistory(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function recordDailyActivity(dateStr?: string, incrementBy = 1): Record<string, number> {
+  try {
+    const history = getActivityHistory();
+    const date = dateStr || new Date().toISOString().slice(0, 10);
+    history[date] = (history[date] || 0) + incrementBy;
+    localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify(history));
+    return history;
+  } catch {
+    return {};
+  }
+}
+
+// Instructions Font Size
+export function getStoredInstructionsFontSize(defaultSize = 13): number {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.INSTRUCTIONS_FONT_SIZE);
+    if (!raw) return defaultSize;
+    const parsed = parseInt(raw, 10);
+    return isNaN(parsed) ? defaultSize : Math.max(11, Math.min(parsed, 20));
+  } catch {
+    return defaultSize;
+  }
+}
+
+export function setStoredInstructionsFontSize(size: number): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.INSTRUCTIONS_FONT_SIZE, size.toString());
+  } catch {}
+}
+
 export function exportProgressSnapshot(): string {
   const snapshot: LocalStorageSnapshot = {
     version: 1,
@@ -136,6 +179,7 @@ export function exportProgressSnapshot(): string {
     bookmarks: getStoredBookmarks(),
     notes: getStoredNotes(),
     settings: getStoredSettings(),
+    activityHistory: getActivityHistory(),
   };
   return JSON.stringify(snapshot, null, 2);
 }
@@ -160,6 +204,9 @@ export function importProgressSnapshot(jsonStr: string): boolean {
     if (data.settings && typeof data.settings === 'object') {
       saveStoredSettings({ ...DEFAULT_SETTINGS, ...data.settings });
     }
+    if (data.activityHistory && typeof data.activityHistory === 'object') {
+      localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify(data.activityHistory));
+    }
     return true;
   } catch {
     return false;
@@ -172,5 +219,6 @@ export function clearAllLocalProgress(): void {
     localStorage.removeItem(STORAGE_KEYS.COMPLETED);
     localStorage.removeItem(STORAGE_KEYS.BOOKMARKS);
     localStorage.removeItem(STORAGE_KEYS.NOTES);
+    localStorage.removeItem(STORAGE_KEYS.ACTIVITY);
   } catch {}
 }
