@@ -35,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setFilter,
     searchQuery,
     setSearchQuery,
+    getShortcut,
   } = useRustlings();
 
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(() => {
@@ -99,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   if (collapsed) {
     return (
       <div className="w-12 border-r border-zinc-800/80 bg-[#09090b] flex flex-col items-center py-2.5 gap-3 shrink-0 select-none">
-        <Tooltip content="Expand Sidebar" side="right">
+        <Tooltip content="Expand Sidebar" shortcut={getShortcut('⌘B', 'Ctrl+B')} side="right">
           <button
             onClick={onToggleCollapse}
             className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 transition-colors"
@@ -149,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {exercises.length}
           </span>
         </div>
-        <Tooltip content="Collapse Sidebar" side="bottom">
+        <Tooltip content="Collapse Sidebar" shortcut={getShortcut('⌘B', 'Ctrl+B')} side="bottom">
           <button
             onClick={onToggleCollapse}
             className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"

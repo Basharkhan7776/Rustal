@@ -11,11 +11,23 @@ const STORAGE_KEYS = {
   INSTRUCTIONS_FONT_SIZE: 'rustal_v1_instructions_font_size',
 };
 
+export function detectPlatform(): 'mac' | 'windows' {
+  if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+    const nav = navigator as any;
+    const p = nav.userAgentData?.platform || nav.platform || nav.userAgent || '';
+    if (/Mac|iPhone|iPad|iPod/i.test(p)) {
+      return 'mac';
+    }
+  }
+  return 'windows';
+}
+
 export const DEFAULT_SETTINGS: AppSettings = {
   vimMode: false,
   fontSize: 14,
   theme: 'dark',
   autoRunOnLoad: false,
+  keymapPlatform: detectPlatform(),
 };
 
 export interface LocalStorageSnapshot {
@@ -117,8 +129,11 @@ export function saveStoredNote(id: string, note: string): void {
 
 export function getStoredSettings(): AppSettings {
   try {
+    const detected = detectPlatform();
     const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+    return raw
+      ? { ...DEFAULT_SETTINGS, keymapPlatform: detected, ...JSON.parse(raw) }
+      : { ...DEFAULT_SETTINGS, keymapPlatform: detected };
   } catch {
     return DEFAULT_SETTINGS;
   }

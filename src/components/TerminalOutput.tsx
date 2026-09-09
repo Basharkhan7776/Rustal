@@ -27,7 +27,7 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
   collapsed,
   onToggleCollapse,
 }) => {
-  const { isRunning, lastResult, clearLastResult, nextExercise } = useRustlings();
+  const { isRunning, lastResult, clearLastResult, nextExercise, getShortcut } = useRustlings();
 
   const combinedOutput = useMemo(() => {
     if (!lastResult) return '';
@@ -84,7 +84,7 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
 
         <div className="flex items-center gap-1">
           {lastResult?.success && (
-            <Tooltip content="Continue to next exercise" shortcut="Alt+→">
+            <Tooltip content="Continue to next exercise" shortcut={getShortcut('⌥→', 'Alt+→')}>
               <Button
                 variant="primary"
                 size="sm"
@@ -108,7 +108,10 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
             </Tooltip>
           )}
 
-          <Tooltip content={collapsed ? 'Expand terminal' : 'Collapse terminal'}>
+          <Tooltip
+            content={collapsed ? 'Expand terminal' : 'Collapse terminal'}
+            shortcut={getShortcut('⌘T', 'Ctrl+T')}
+          >
             <button
               onClick={onToggleCollapse}
               className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
@@ -140,15 +143,17 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
                     <CheckCircle2 className="w-4 h-4 text-zinc-300 shrink-0" />
                     <span className="font-medium">All checks passed!</span>
                   </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={nextExercise}
-                    className="h-6 text-[11px] px-2 gap-1 text-zinc-200"
-                  >
-                    <span>Continue</span>
-                    <ArrowRight className="w-3 h-3 text-zinc-400" />
-                  </Button>
+                  <Tooltip content="Continue to next exercise" shortcut={getShortcut('⌥→', 'Alt+→')}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={nextExercise}
+                      className="h-6 text-[11px] px-2 gap-1 text-zinc-200"
+                    >
+                      <span>Continue</span>
+                      <ArrowRight className="w-3 h-3 text-zinc-400" />
+                    </Button>
+                  </Tooltip>
                 </div>
               )}
 

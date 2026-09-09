@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   Bookmark,
   Loader2,
+  PanelLeft,
+  Terminal,
 } from 'lucide-react';
 import { useRustlings } from '../context/RustlingsContext';
 import { Button } from './ui/Button';
@@ -29,6 +31,11 @@ export const Header: React.FC = () => {
     bookmarkedIds,
     toggleBookmark,
     resetCurrentCode,
+    sidebarCollapsed,
+    toggleSidebar,
+    terminalCollapsed,
+    toggleTerminal,
+    getShortcut,
     setShowSolutionModal,
     setShowSettingsModal,
     setShowCommandPalette,
@@ -41,7 +48,21 @@ export const Header: React.FC = () => {
   return (
     <header className="h-12 border-b border-zinc-800/80 bg-[#09090b] px-3 flex items-center justify-between gap-4 select-none shrink-0 z-20">
       {/* Left branding & current exercise info */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
+        <Tooltip
+          content={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          shortcut={getShortcut('⌘B', 'Ctrl+B')}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
+          >
+            <PanelLeft className="w-4 h-4 text-zinc-400" />
+          </Button>
+        </Tooltip>
+
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 font-bold text-xs">
             🦀
@@ -82,7 +103,7 @@ export const Header: React.FC = () => {
       {/* Right controls: Icon buttons with tooltips instead of text labels */}
       <div className="flex items-center gap-1.5 shrink-0">
         {/* Search button trigger */}
-        <Tooltip content="Search exercises" shortcut="⌘K">
+        <Tooltip content="Search exercises" shortcut={getShortcut('⌘K', 'Ctrl+K')}>
           <Button
             variant="secondary"
             size="icon"
@@ -95,7 +116,7 @@ export const Header: React.FC = () => {
 
         {/* Prev / Next navigation */}
         <div className="flex items-center border border-zinc-800 rounded-lg p-0.5 bg-zinc-900/60">
-          <Tooltip content="Previous exercise" shortcut="Alt+←">
+          <Tooltip content="Previous exercise" shortcut={getShortcut('⌥←', 'Alt+←')}>
             <Button
               variant="ghost"
               size="icon"
@@ -106,7 +127,7 @@ export const Header: React.FC = () => {
             </Button>
           </Tooltip>
           <div className="w-px h-3.5 bg-zinc-800" />
-          <Tooltip content="Next exercise" shortcut="Alt+→">
+          <Tooltip content="Next exercise" shortcut={getShortcut('⌥→', 'Alt+→')}>
             <Button
               variant="ghost"
               size="icon"
@@ -171,7 +192,7 @@ export const Header: React.FC = () => {
         </Tooltip>
 
         {/* Run & Test Button (Primary Icon Button with tooltip) */}
-        <Tooltip content="Run & Test" shortcut="⌘↵">
+        <Tooltip content="Run & Test" shortcut={getShortcut('⌘⇧↵', 'Ctrl+Shift+Enter')}>
           <Button
             variant="primary"
             size="icon"
@@ -184,6 +205,21 @@ export const Header: React.FC = () => {
             ) : (
               <Play className="w-4 h-4 fill-zinc-950 text-zinc-950 ml-0.5" />
             )}
+          </Button>
+        </Tooltip>
+
+        {/* Terminal Toggle Button */}
+        <Tooltip
+          content={terminalCollapsed ? 'Expand terminal' : 'Collapse terminal'}
+          shortcut={getShortcut('⌘T', 'Ctrl+T')}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTerminal}
+            className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
+          >
+            <Terminal className="w-4 h-4 text-zinc-400" />
           </Button>
         </Tooltip>
 

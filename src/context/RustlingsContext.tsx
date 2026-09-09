@@ -49,6 +49,13 @@ interface RustlingsContextValue {
   setSearchQuery: (q: string) => void;
   settings: AppSettings;
   updateSettings: (s: Partial<AppSettings>) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleSidebar: () => void;
+  terminalCollapsed: boolean;
+  setTerminalCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleTerminal: () => void;
+  getShortcut: (mac: string, win: string) => string;
   showCommandPalette: boolean;
   setShowCommandPalette: (b: boolean) => void;
   showSolutionModal: boolean;
@@ -97,6 +104,24 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
   const [showSolutionModal, setShowSolutionModal] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [showResetModal, setShowResetModal] = useState<boolean>(false);
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [terminalCollapsed, setTerminalCollapsed] = useState<boolean>(false);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => !prev);
+  }, []);
+
+  const toggleTerminal = useCallback(() => {
+    setTerminalCollapsed(prev => !prev);
+  }, []);
+
+  const getShortcut = useCallback(
+    (mac: string, win: string) => {
+      return settings.keymapPlatform === 'mac' ? mac : win;
+    },
+    [settings.keymapPlatform]
+  );
 
   const currentExercise = exercises.find(e => e.id === currentId) || exercises[0];
 
@@ -243,35 +268,90 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+      const key = e.key.toLowerCase();
 
+      const isAnyModalOpen =
+        showCommandPalette || showSettingsModal || showSolutionModal || showResetModal;
+
+      // If Escape is pressed, dismiss any open modal
+      if (e.key === 'Escape') {
+        if (showCommandPalette) setShowCommandPalette(false);
+        if (showSettingsModal) setShowSettingsModal(false);
+        if (showSolutionModal) setShowSolutionModal(false);
+        if (showResetModal) setShowResetModal(false);
+        return;
+      }
+
+      // If a modal is open, avoid triggering workspace actions (except Escape)
+      if (isAnyModalOpen) {
+        return;
+      }
+
+      // Sidebar Toggle: Ctrl+B or Cmd+B (also supports Ctrl+\)
+      if (isCmdOrCtrl && (key === 'b' || e.key === '\\')) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSidebar();
+        return;
+      }
+
+      // Terminal Toggle: Ctrl+T or Cmd+T (with Ctrl+J or Ctrl+` fallbacks for browser safety)
+      if (
+        (isCmdOrCtrl && key === 't') ||
+        (isCmdOrCtrl && key === 'j') ||
+        (isCmdOrCtrl && e.key === '`')
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleTerminal();
+        return;
+      }
+
+      // Compile & Run: Ctrl+Shift+Enter or Cmd+Shift+Enter (also Ctrl+Enter / Cmd+Enter)
       if (isCmdOrCtrl && e.key === 'Enter') {
         e.preventDefault();
+        e.stopPropagation();
         runCode();
         return;
       }
 
-      if (isCmdOrCtrl && e.key.toLowerCase() === 'k') {
+      // Search / Command Palette: Ctrl+K or Cmd+K
+      if (isCmdOrCtrl && key === 'k') {
         e.preventDefault();
+        e.stopPropagation();
         setShowCommandPalette(prev => !prev);
         return;
       }
 
+      // Navigation: Alt+ArrowRight / Alt+ArrowLeft
       if (e.altKey && e.key === 'ArrowRight') {
         e.preventDefault();
+        e.stopPropagation();
         nextExercise();
         return;
       }
 
       if (e.altKey && e.key === 'ArrowLeft') {
         e.preventDefault();
+        e.stopPropagation();
         prevExercise();
         return;
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [runCode, nextExercise, prevExercise]);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [
+    runCode,
+    toggleSidebar,
+    toggleTerminal,
+    nextExercise,
+    prevExercise,
+    showCommandPalette,
+    showSettingsModal,
+    showSolutionModal,
+    showResetModal,
+  ]);
 
   const value: RustlingsContextValue = {
     exercises,
@@ -300,6 +380,13 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     setSearchQuery,
     settings,
     updateSettings,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+    toggleSidebar,
+    terminalCollapsed,
+    setTerminalCollapsed,
+    toggleTerminal,
+    getShortcut,
     showCommandPalette,
     setShowCommandPalette,
     showSolutionModal,

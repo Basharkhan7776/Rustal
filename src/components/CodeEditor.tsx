@@ -15,6 +15,12 @@ export const CodeEditor: React.FC = () => {
     isRunning,
     settings,
     updateSettings,
+    toggleSidebar,
+    toggleTerminal,
+    nextExercise,
+    prevExercise,
+    setShowCommandPalette,
+    getShortcut,
   } = useRustlings();
 
   const editorRef = useRef<any>(null);
@@ -49,9 +55,38 @@ export const CodeEditor: React.FC = () => {
 
     monaco.editor.setTheme('coss-dark');
 
-    // Add keyboard shortcut for Cmd+Enter / Ctrl+Enter inside editor
+    // Run code shortcut: Cmd+Shift+Enter / Ctrl+Shift+Enter & Cmd+Enter / Ctrl+Enter
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
+      runCode();
+    });
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       runCode();
+    });
+
+    // Sidebar toggle shortcut: Cmd+B / Ctrl+B
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, () => {
+      toggleSidebar();
+    });
+
+    // Terminal toggle shortcut: Cmd+T / Ctrl+T & fallback Cmd+J / Ctrl+J
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyT, () => {
+      toggleTerminal();
+    });
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyJ, () => {
+      toggleTerminal();
+    });
+
+    // Search shortcut: Cmd+K / Ctrl+K
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+      setShowCommandPalette(true);
+    });
+
+    // Navigation shortcuts: Alt+Left / Alt+Right
+    editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.LeftArrow, () => {
+      prevExercise();
+    });
+    editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.RightArrow, () => {
+      nextExercise();
     });
   };
 
@@ -111,7 +146,7 @@ export const CodeEditor: React.FC = () => {
           </Tooltip>
 
           {/* Run Code icon button with tooltip */}
-          <Tooltip content="Run Code" shortcut="⌘↵">
+          <Tooltip content="Run Code" shortcut={getShortcut('⌘⇧↵', 'Ctrl+Shift+Enter')}>
             <Button
               variant="secondary"
               size="icon"

@@ -39,4 +39,6 @@ export interface AppSettings {
   fontSize: number;
   theme: 'dark' | 'coss' | 'light';
   autoRunOnLoad: boolean;
+  keymapPlatform: 'mac' | 'windows';
 }
+

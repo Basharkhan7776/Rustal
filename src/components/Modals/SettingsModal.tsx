@@ -7,6 +7,8 @@ import {
   AlertTriangle,
   HardDrive,
   Keyboard,
+  Command,
+  Monitor,
 } from 'lucide-react';
 import { useRustlings } from '../../context/RustlingsContext';
 import { exportProgressSnapshot, importProgressSnapshot } from '../../lib/storage';
@@ -141,6 +143,103 @@ export const SettingsModal: React.FC = () => {
                   }`}
                 />
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Keyboard Shortcuts & Platform Modifier Toggle */}
+        <div className="space-y-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h4 className="font-semibold uppercase tracking-wider text-[10px] text-zinc-400 flex items-center gap-1.5">
+              <Keyboard className="w-3 h-3 text-zinc-400" />
+              Keyboard Shortcuts & Platform
+            </h4>
+
+            {/* Mac vs Windows Toggle */}
+            <div className="inline-flex bg-[#121215] p-0.5 rounded-lg border border-zinc-800 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => updateSettings({ keymapPlatform: 'mac' })}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  settings.keymapPlatform === 'mac'
+                    ? 'bg-zinc-100 text-zinc-950 font-semibold shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850'
+                }`}
+              >
+                <Command className="w-3 h-3" />
+                <span>macOS (⌘)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateSettings({ keymapPlatform: 'windows' })}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  settings.keymapPlatform === 'windows'
+                    ? 'bg-zinc-100 text-zinc-950 font-semibold shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850'
+                }`}
+              >
+                <Monitor className="w-3 h-3" />
+                <span>Windows / Linux (Ctrl)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Shortcuts Reference Grid */}
+          <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#121215] border border-zinc-800/80">
+                <span className="text-zinc-300 text-[11px]">Toggle Question Sidebar</span>
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-850 text-zinc-200 border border-zinc-700/80 rounded">
+                  {settings.keymapPlatform === 'mac' ? '⌘B' : 'Ctrl+B'}
+                </kbd>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#121215] border border-zinc-800/80">
+                <span className="text-zinc-300 text-[11px]">Toggle Terminal</span>
+                <div className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-850 text-zinc-200 border border-zinc-700/80 rounded">
+                    {settings.keymapPlatform === 'mac' ? '⌘T' : 'Ctrl+T'}
+                  </kbd>
+                  <span className="text-[10px] text-zinc-500">or</span>
+                  <kbd className="px-1 py-0.5 text-[9px] font-mono bg-zinc-850 text-zinc-400 border border-zinc-700/80 rounded">
+                    {settings.keymapPlatform === 'mac' ? '⌘J' : 'Ctrl+J'}
+                  </kbd>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#121215] border border-zinc-800/80">
+                <span className="text-zinc-300 text-[11px]">Compile & Run Program</span>
+                <div className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-850 text-zinc-200 border border-zinc-700/80 rounded">
+                    {settings.keymapPlatform === 'mac' ? '⌘⇧↵' : 'Ctrl+Shift+Enter'}
+                  </kbd>
+                  <span className="text-[10px] text-zinc-500">/</span>
+                  <kbd className="px-1 py-0.5 text-[9px] font-mono bg-zinc-850 text-zinc-400 border border-zinc-700/80 rounded">
+                    {settings.keymapPlatform === 'mac' ? '⌘↵' : 'Ctrl+Enter'}
+                  </kbd>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#121215] border border-zinc-800/80">
+                <span className="text-zinc-300 text-[11px]">Quick Search Curriculum</span>
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-850 text-zinc-200 border border-zinc-700/80 rounded">
+                  {settings.keymapPlatform === 'mac' ? '⌘K' : 'Ctrl+K'}
+                </kbd>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#121215] border border-zinc-800/80">
+                <span className="text-zinc-300 text-[11px]">Previous Exercise</span>
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-850 text-zinc-200 border border-zinc-700/80 rounded">
+                  {settings.keymapPlatform === 'mac' ? '⌥←' : 'Alt+←'}
+                </kbd>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[#121215] border border-zinc-800/80">
+                <span className="text-zinc-300 text-[11px]">Next Exercise</span>
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-850 text-zinc-200 border border-zinc-700/80 rounded">
+                  {settings.keymapPlatform === 'mac' ? '⌥→' : 'Alt+→'}
+                </kbd>
+              </div>
             </div>
           </div>
         </div>

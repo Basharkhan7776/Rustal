@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RustlingsProvider } from './context/RustlingsContext';
+import { RustlingsProvider, useRustlings } from './context/RustlingsContext';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { CodeEditor } from './components/CodeEditor';
@@ -34,9 +34,14 @@ function getSavedPanels(): PanelSizes {
 }
 
 const AppContent: React.FC = () => {
+  const {
+    sidebarCollapsed,
+    toggleSidebar,
+    terminalCollapsed,
+    setTerminalCollapsed,
+    toggleTerminal,
+  } = useRustlings();
   const [panelSizes, setPanelSizes] = useState<PanelSizes>(getSavedPanels);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
-  const [terminalCollapsed, setTerminalCollapsed] = useState<boolean>(false);
   const startSizesRef = useRef<PanelSizes>(panelSizes);
 
   useEffect(() => {
@@ -87,7 +92,7 @@ const AppContent: React.FC = () => {
         <Sidebar
           width={panelSizes.sidebarWidth}
           collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleCollapse={toggleSidebar}
         />
 
         {/* Divider 1: Resize Sidebar horizontally */}
@@ -128,7 +133,7 @@ const AppContent: React.FC = () => {
           <TerminalOutput
             height={panelSizes.terminalHeight}
             collapsed={terminalCollapsed}
-            onToggleCollapse={() => setTerminalCollapsed(!terminalCollapsed)}
+            onToggleCollapse={toggleTerminal}
           />
         </div>
       </div>
