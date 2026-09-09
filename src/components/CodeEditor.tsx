@@ -10,6 +10,10 @@ import {
   ZoomOut,
   Keyboard,
   ChevronDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { useRustlings } from '../context/RustlingsContext';
 import { useKeyboardViewport } from '../hooks/useKeyboardViewport';
@@ -17,7 +21,7 @@ import { Button } from './ui/Button';
 import { Tooltip } from './ui/Tooltip';
 
 const RUST_SYMBOLS = [
-  '{', '}', '(', ')', '[', ']', ';', '&', '|', '->', '::', '!', '=', '"', '<', '>', '_', 'Tab',
+  '{', '}', '(', ')', '[', ']', ';', ':', '->', '::', '&', '|', '!', '=', '"', "'", '?', '*', '.', '<', '>', '_', 'Tab',
 ];
 
 export const CodeEditor: React.FC = () => {
@@ -45,12 +49,174 @@ export const CodeEditor: React.FC = () => {
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
 
+  // Virtual Joystick & D-Pad navigation state & refs
+  const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const joystickBaseRef = useRef<HTMLDivElement>(null);
+  const joystickIntervalRef = useRef<any>(null);
+  const currentDirRef = useRef<'left' | 'right' | 'up' | 'down' | null>(null);
+
+  const arrowRepeatRef = useRef<any>(null);
+  const arrowTimeoutRef = useRef<any>(null);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Clean up any ongoing intervals or timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (joystickIntervalRef.current) clearInterval(joystickIntervalRef.current);
+      if (arrowTimeoutRef.current) clearTimeout(arrowTimeoutRef.current);
+      if (arrowRepeatRef.current) clearInterval(arrowRepeatRef.current);
+    };
+  }, []);
+
+  // Programmatic cursor movement for Monaco editor
+  const moveCursor = useCallback((direction: 'left' | 'right' | 'up' | 'down') => {
+    if (!editorRef.current) return;
+    const editor = editorRef.current;
+    const pos = editor.getPosition();
+    if (!pos) return;
+
+    const model = editor.getModel();
+    if (!model) return;
+
+    let { lineNumber, column } = pos;
+
+    if (direction === 'left') {
+      if (column > 1) {
+        column--;
+      } else if (lineNumber > 1) {
+        lineNumber--;
+        column = model.getLineMaxColumn(lineNumber);
+      }
+    } else if (direction === 'right') {
+      const maxCol = model.getLineMaxColumn(lineNumber);
+      if (column < maxCol) {
+        column++;
+      } else if (lineNumber < model.getLineCount()) {
+        lineNumber++;
+        column = 1;
+      }
+    } else if (direction === 'up') {
+      if (lineNumber > 1) {
+        lineNumber--;
+        column = Math.min(column, model.getLineMaxColumn(lineNumber));
+      }
+    } else if (direction === 'down') {
+      if (lineNumber < model.getLineCount()) {
+        lineNumber++;
+        column = Math.min(column, model.getLineMaxColumn(lineNumber));
+      }
+    }
+
+    editor.setPosition({ lineNumber, column });
+    editor.revealPositionInCenterIfOutsideViewport({ lineNumber, column });
+  }, []);
+
+  // Joystick pointer handlers
+  const processJoystickMovement = useCallback((clientX: number, clientY: number) => {
+    if (!joystickBaseRef.current) return;
+    const rect = joystickBaseRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    let dx = clientX - centerX;
+    let dy = clientY - centerY;
+
+    const maxRadius = 11;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > maxRadius) {
+      dx = (dx / dist) * maxRadius;
+      dy = (dy / dist) * maxRadius;
+    }
+
+    setJoystickPos({ x: dx, y: dy });
+
+    const deadzone = 3.5;
+    let dir: 'left' | 'right' | 'up' | 'down' | null = null;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx < -deadzone) dir = 'left';
+      else if (dx > deadzone) dir = 'right';
+    } else {
+      if (dy < -deadzone) dir = 'up';
+      else if (dy > deadzone) dir = 'down';
+    }
+
+    if (dir) {
+      if (currentDirRef.current !== dir) {
+        currentDirRef.current = dir;
+        moveCursor(dir);
+
+        if (joystickIntervalRef.current) {
+          clearInterval(joystickIntervalRef.current);
+        }
+        joystickIntervalRef.current = setInterval(() => {
+          if (currentDirRef.current) {
+            moveCursor(currentDirRef.current);
+          }
+        }, 110);
+      }
+    } else {
+      currentDirRef.current = null;
+      if (joystickIntervalRef.current) {
+        clearInterval(joystickIntervalRef.current);
+        joystickIntervalRef.current = null;
+      }
+    }
+  }, [moveCursor]);
+
+  const handleJoystickPointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    processJoystickMovement(e.clientX, e.clientY);
+  }, [processJoystickMovement]);
+
+  const handleJoystickPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    processJoystickMovement(e.clientX, e.clientY);
+  }, [isDragging, processJoystickMovement]);
+
+  const handleJoystickPointerUp = useCallback((e: React.PointerEvent) => {
+    setIsDragging(false);
+    setJoystickPos({ x: 0, y: 0 });
+    currentDirRef.current = null;
+    if (joystickIntervalRef.current) {
+      clearInterval(joystickIntervalRef.current);
+      joystickIntervalRef.current = null;
+    }
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+  }, []);
+
+  // Arrow button handlers (tap for single step, hold for repeat)
+  const handleArrowPointerDown = useCallback((e: React.PointerEvent, dir: 'left' | 'right' | 'up' | 'down') => {
+    e.preventDefault();
+    moveCursor(dir);
+
+    if (arrowTimeoutRef.current) clearTimeout(arrowTimeoutRef.current);
+    if (arrowRepeatRef.current) clearInterval(arrowRepeatRef.current);
+
+    arrowTimeoutRef.current = setTimeout(() => {
+      arrowRepeatRef.current = setInterval(() => {
+        moveCursor(dir);
+      }, 80);
+    }, 240);
+  }, [moveCursor]);
+
+  const handleArrowPointerUp = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    if (arrowTimeoutRef.current) clearTimeout(arrowTimeoutRef.current);
+    if (arrowRepeatRef.current) clearInterval(arrowRepeatRef.current);
   }, []);
 
   // Re-layout and keep active cursor visible whenever viewport changes (e.g. mobile keyboard toggles)
@@ -296,9 +462,91 @@ export const CodeEditor: React.FC = () => {
         />
       </div>
 
-      {/* Mobile Quick Symbol Accessory Bar (visible when virtual keyboard is active) */}
-      {isKeyboardOpen && (
-        <div className="md:hidden shrink-0 h-9 bg-[#121215] border-t border-zinc-800/80 flex items-center px-1.5 gap-1 overflow-x-auto no-scrollbar select-none z-20">
+      {/* Mobile Joystick & Quick Symbol Toolbar (Always visible on mobile in Code tab) */}
+      <div className="md:hidden shrink-0 h-11 bg-[#0c0c0f] border-t border-zinc-800/80 flex items-center px-1.5 gap-1.5 overflow-x-auto no-scrollbar select-none z-20">
+        {/* Sticky Left Navigation Cluster: Interactive Joystick + 4 D-Pad Arrow Buttons */}
+        <div className="sticky left-0 bg-[#0c0c0f] z-10 flex items-center gap-1 pr-1.5 border-r border-zinc-800/80 shrink-0">
+          {/* Virtual Analog Joystick */}
+          <div
+            ref={joystickBaseRef}
+            onPointerDown={handleJoystickPointerDown}
+            onPointerMove={handleJoystickPointerMove}
+            onPointerUp={handleJoystickPointerUp}
+            onPointerCancel={handleJoystickPointerUp}
+            className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-700/80 shadow-inner relative flex items-center justify-center shrink-0 select-none touch-none cursor-grab active:cursor-grabbing mr-0.5"
+            title="Drag joystick to move cursor"
+            aria-label="Cursor Joystick"
+          >
+            {/* Direction markers */}
+            <span className="absolute top-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">▲</span>
+            <span className="absolute bottom-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">▼</span>
+            <span className="absolute left-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">◀</span>
+            <span className="absolute right-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">▶</span>
+
+            {/* Joystick Thumb Nub */}
+            <div
+              style={{
+                transform: `translate(${joystickPos.x}px, ${joystickPos.y}px)`,
+                transition: isDragging ? 'none' : 'transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+              }}
+              className="w-3.5 h-3.5 rounded-full bg-zinc-200 shadow-sm flex items-center justify-center pointer-events-none"
+            >
+              <div className="w-1 h-1 rounded-full bg-zinc-700" />
+            </div>
+          </div>
+
+          {/* D-Pad 4 Arrow Buttons */}
+          <button
+            type="button"
+            onPointerDown={e => handleArrowPointerDown(e, 'left')}
+            onPointerUp={handleArrowPointerUp}
+            onPointerLeave={handleArrowPointerUp}
+            onPointerCancel={handleArrowPointerUp}
+            className="w-7 h-7 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-zinc-100 active:bg-zinc-750 active:scale-95 transition-all select-none"
+            aria-label="Move Left"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-zinc-300" />
+          </button>
+
+          <button
+            type="button"
+            onPointerDown={e => handleArrowPointerDown(e, 'up')}
+            onPointerUp={handleArrowPointerUp}
+            onPointerLeave={handleArrowPointerUp}
+            onPointerCancel={handleArrowPointerUp}
+            className="w-7 h-7 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-zinc-100 active:bg-zinc-750 active:scale-95 transition-all select-none"
+            aria-label="Move Up"
+          >
+            <ArrowUp className="w-3.5 h-3.5 text-zinc-300" />
+          </button>
+
+          <button
+            type="button"
+            onPointerDown={e => handleArrowPointerDown(e, 'down')}
+            onPointerUp={handleArrowPointerUp}
+            onPointerLeave={handleArrowPointerUp}
+            onPointerCancel={handleArrowPointerUp}
+            className="w-7 h-7 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-zinc-100 active:bg-zinc-750 active:scale-95 transition-all select-none"
+            aria-label="Move Down"
+          >
+            <ArrowDown className="w-3.5 h-3.5 text-zinc-300" />
+          </button>
+
+          <button
+            type="button"
+            onPointerDown={e => handleArrowPointerDown(e, 'right')}
+            onPointerUp={handleArrowPointerUp}
+            onPointerLeave={handleArrowPointerUp}
+            onPointerCancel={handleArrowPointerUp}
+            className="w-7 h-7 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 hover:text-zinc-100 active:bg-zinc-750 active:scale-95 transition-all select-none"
+            aria-label="Move Right"
+          >
+            <ArrowRight className="w-3.5 h-3.5 text-zinc-300" />
+          </button>
+        </div>
+
+        {/* Dismiss Keyboard Button (if keyboard is active) */}
+        {isKeyboardOpen && (
           <button
             type="button"
             onPointerDown={e => {
@@ -306,27 +554,28 @@ export const CodeEditor: React.FC = () => {
               dismissKeyboard();
             }}
             onClick={dismissKeyboard}
-            className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-300 hover:text-zinc-100 text-xs font-medium border border-zinc-700/60 mr-1 cursor-pointer transition-colors"
+            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-300 hover:text-zinc-100 text-xs font-medium border border-zinc-700/60 cursor-pointer transition-colors"
             title="Dismiss keyboard"
             aria-label="Dismiss keyboard"
           >
             <Keyboard className="w-3.5 h-3.5 text-zinc-400" />
             <ChevronDown className="w-3 h-3 text-zinc-400" />
           </button>
-          <div className="h-4 w-px bg-zinc-800 shrink-0 mr-0.5" />
-          {RUST_SYMBOLS.map(sym => (
-            <button
-              key={sym}
-              type="button"
-              onPointerDown={e => triggerSymbol(e, sym)}
-              onClick={e => triggerSymbol(e, sym)}
-              className="shrink-0 min-w-[30px] h-7 px-2 flex items-center justify-center font-mono text-xs font-medium rounded bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-700 text-zinc-200 border border-zinc-800 hover:border-zinc-700 cursor-pointer select-none transition-colors"
-            >
-              {sym}
-            </button>
-          ))}
-        </div>
-      )}
+        )}
+
+        {/* Rust Symbols Horizontal Scroll */}
+        {RUST_SYMBOLS.map(sym => (
+          <button
+            key={sym}
+            type="button"
+            onPointerDown={e => triggerSymbol(e, sym)}
+            onClick={e => triggerSymbol(e, sym)}
+            className="shrink-0 min-w-[30px] h-7 px-2 flex items-center justify-center font-mono text-xs font-medium rounded bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-700 text-zinc-200 border border-zinc-800 hover:border-zinc-700 cursor-pointer select-none transition-colors"
+          >
+            {sym}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
