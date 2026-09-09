@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RustlingsProvider } from './context/RustlingsContext';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
@@ -37,6 +37,7 @@ const AppContent: React.FC = () => {
   const [panelSizes, setPanelSizes] = useState<PanelSizes>(getSavedPanels);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [terminalCollapsed, setTerminalCollapsed] = useState<boolean>(false);
+  const startSizesRef = useRef<PanelSizes>(panelSizes);
 
   useEffect(() => {
     try {
@@ -44,29 +45,35 @@ const AppContent: React.FC = () => {
     } catch {}
   }, [panelSizes]);
 
-  // Sidebar horizontal resize handler
-  const handleSidebarResize = (delta: number) => {
-    setPanelSizes(prev => ({
-      ...prev,
-      sidebarWidth: Math.max(160, Math.min(prev.sidebarWidth + delta, 550)),
-    }));
+  // Sidebar 1:1 resize handler
+  const handleSidebarResizeStart = () => {
+    startSizesRef.current = panelSizes;
+  };
+  const handleSidebarResize = (deltaX: number) => {
+    const initial = startSizesRef.current.sidebarWidth;
+    const newWidth = Math.max(160, Math.min(initial + deltaX, 550));
+    setPanelSizes(prev => ({ ...prev, sidebarWidth: newWidth }));
   };
 
-  // Instructions pane horizontal resize handler (dragging left increases width)
-  const handleInstructionsResize = (delta: number) => {
-    setPanelSizes(prev => ({
-      ...prev,
-      instructionsWidth: Math.max(200, Math.min(prev.instructionsWidth - delta, 750)),
-    }));
+  // Instructions pane 1:1 resize handler
+  const handleInstructionsResizeStart = () => {
+    startSizesRef.current = panelSizes;
+  };
+  const handleInstructionsResize = (deltaX: number) => {
+    const initial = startSizesRef.current.instructionsWidth;
+    const newWidth = Math.max(200, Math.min(initial - deltaX, 750));
+    setPanelSizes(prev => ({ ...prev, instructionsWidth: newWidth }));
   };
 
-  // Terminal pane vertical resize handler (dragging up increases height)
-  const handleTerminalResize = (delta: number) => {
+  // Terminal pane 1:1 vertical resize handler
+  const handleTerminalResizeStart = () => {
+    startSizesRef.current = panelSizes;
+  };
+  const handleTerminalResize = (deltaY: number) => {
     if (terminalCollapsed) setTerminalCollapsed(false);
-    setPanelSizes(prev => ({
-      ...prev,
-      terminalHeight: Math.max(80, Math.min(prev.terminalHeight - delta, 650)),
-    }));
+    const initial = startSizesRef.current.terminalHeight;
+    const newHeight = Math.max(60, Math.min(initial - deltaY, 650));
+    setPanelSizes(prev => ({ ...prev, terminalHeight: newHeight }));
   };
 
   return (
@@ -87,6 +94,7 @@ const AppContent: React.FC = () => {
         {!sidebarCollapsed && (
           <ResizeHandle
             direction="vertical"
+            onResizeStart={handleSidebarResizeStart}
             onResize={handleSidebarResize}
           />
         )}
@@ -101,6 +109,7 @@ const AppContent: React.FC = () => {
             {/* Divider 2: Resize Editor vs Instructions horizontally */}
             <ResizeHandle
               direction="vertical"
+              onResizeStart={handleInstructionsResizeStart}
               onResize={handleInstructionsResize}
             />
 
@@ -111,6 +120,7 @@ const AppContent: React.FC = () => {
           {/* Divider 3: Resize Terminal Output vertically (Up/Down) */}
           <ResizeHandle
             direction="horizontal"
+            onResizeStart={handleTerminalResizeStart}
             onResize={handleTerminalResize}
           />
 

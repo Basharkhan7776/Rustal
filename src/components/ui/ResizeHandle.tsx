@@ -2,34 +2,39 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '../../lib/utils';
 
 export interface ResizeHandleProps {
-  direction: 'horizontal' | 'vertical'; // vertical = divider is vertical (drags left/right), horizontal = divider is horizontal (drags up/down)
-  onResize: (delta: number) => void;
+  direction: 'horizontal' | 'vertical';
+  onResizeStart?: () => void;
+  onResize: (deltaFromStart: number) => void;
+  onResizeEnd?: () => void;
   className?: string;
 }
 
 export const ResizeHandle: React.FC<ResizeHandleProps> = ({
   direction,
+  onResizeStart,
   onResize,
+  onResizeEnd,
   className,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
+    onResizeStart?.();
 
     const startPos = direction === 'vertical' ? e.clientX : e.clientY;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const currentPos = direction === 'vertical' ? moveEvent.clientX : moveEvent.clientY;
-      const delta = currentPos - startPos;
-      if (delta !== 0) {
-        onResize(delta);
-      }
+      const totalDelta = currentPos - startPos;
+      onResize(totalDelta);
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      onResizeEnd?.();
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = '';
@@ -40,7 +45,7 @@ export const ResizeHandle: React.FC<ResizeHandleProps> = ({
     window.addEventListener('mouseup', handleMouseUp);
     document.body.style.cursor = direction === 'vertical' ? 'col-resize' : 'row-resize';
     document.body.style.userSelect = 'none';
-  }, [direction, onResize]);
+  }, [direction, onResize, onResizeStart, onResizeEnd]);
 
   useEffect(() => {
     return () => {
@@ -50,25 +55,37 @@ export const ResizeHandle: React.FC<ResizeHandleProps> = ({
   }, []);
 
   return (
-    <div
-      onMouseDown={handleMouseDown}
-      className={cn(
-        'group relative shrink-0 transition-colors z-30 select-none',
-        direction === 'vertical'
-          ? 'w-[5px] -mx-[2px] cursor-col-resize h-full flex items-center justify-center'
-          : 'h-[5px] -my-[2px] cursor-row-resize w-full flex items-center justify-center',
-        className
+    <>
+      {/* Fullscreen transparent shield during dragging to prevent iframes/Monaco from capturing events */}
+      {isDragging && (
+        <div
+          className={cn(
+            'fixed inset-0 z-50 select-none',
+            direction === 'vertical' ? 'cursor-col-resize' : 'cursor-row-resize'
+          )}
+        />
       )}
-    >
+
       <div
+        onMouseDown={handleMouseDown}
         className={cn(
-          'transition-colors duration-150',
+          'group relative shrink-0 z-30 select-none touch-none',
           direction === 'vertical'
-            ? 'w-[1px] h-full bg-zinc-800/80 group-hover:bg-zinc-500 group-active:bg-zinc-300'
-            : 'h-[1px] w-full bg-zinc-800/80 group-hover:bg-zinc-500 group-active:bg-zinc-300',
-          isDragging && 'bg-zinc-300'
+            ? 'w-2 -mx-1 cursor-col-resize h-full flex items-center justify-center'
+            : 'h-2 -my-1 cursor-row-resize w-full flex items-center justify-center',
+          className
         )}
-      />
-    </div>
+      >
+        <div
+          className={cn(
+            'transition-colors duration-100',
+            direction === 'vertical'
+              ? 'w-[1px] h-full bg-zinc-800/80 group-hover:bg-zinc-500 group-hover:w-[2px]'
+              : 'h-[1px] w-full bg-zinc-800/80 group-hover:bg-zinc-500 group-hover:h-[2px]',
+            isDragging && (direction === 'vertical' ? 'bg-zinc-300 w-[2px]' : 'bg-zinc-300 h-[2px]')
+          )}
+        />
+      </div>
+    </>
   );
 };
