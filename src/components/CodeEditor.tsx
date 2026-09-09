@@ -16,8 +16,12 @@ import { useKeyboardViewport } from '../hooks/useKeyboardViewport';
 import { Button } from './ui/Button';
 import { Tooltip } from './ui/Tooltip';
 
-const RUST_SYMBOLS = [
-  '{', '}', '(', ')', '[', ']', ';', ':', '->', '::', '&', '|', '!', '=', '"', "'", '?', '*', '.', '<', '>', '_', 'Tab',
+const LEFT_RUST_SYMBOLS = [
+  '{', '}', '(', ')', '[', ']', ';', ':', '->', '::',
+];
+
+const RIGHT_RUST_SYMBOLS = [
+  '&', '|', '!', '=', '"', "'", '?', '*', '.', '<', '>', '_', 'Tab',
 ];
 
 export const CodeEditor: React.FC = () => {
@@ -433,70 +437,87 @@ export const CodeEditor: React.FC = () => {
         />
       </div>
 
-      {/* Mobile Joystick & Quick Symbol Toolbar (Always visible on mobile in Code tab) */}
-      <div className="md:hidden shrink-0 h-11 bg-[#0c0c0f] border-t border-zinc-800/80 flex items-center px-1.5 gap-1.5 overflow-x-auto no-scrollbar select-none z-20">
-        {/* Sticky Left Navigation Cluster: Virtual Analog Joystick */}
-        <div className="sticky left-0 bg-[#0c0c0f] z-10 flex items-center pr-2 border-r border-zinc-800/80 shrink-0">
-          <div
-            ref={joystickBaseRef}
-            onPointerDown={handleJoystickPointerDown}
-            onPointerMove={handleJoystickPointerMove}
-            onPointerUp={handleJoystickPointerUp}
-            onPointerCancel={handleJoystickPointerUp}
-            className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-700/80 shadow-inner relative flex items-center justify-center shrink-0 select-none touch-none cursor-grab active:cursor-grabbing"
-            title="Drag joystick to move cursor"
-            aria-label="Cursor Joystick"
-          >
-            {/* Direction markers */}
-            <span className="absolute top-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">▲</span>
-            <span className="absolute bottom-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">▼</span>
-            <span className="absolute left-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">◀</span>
-            <span className="absolute right-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">▶</span>
+      {/* Mobile Center Joystick & Quick Symbol Toolbar (Shown only when virtual keyboard is active) */}
+      {isKeyboardOpen && (
+        <div className="md:hidden shrink-0 h-11 bg-[#0c0c0f] border-t border-zinc-800/80 flex items-center px-1.5 select-none z-20">
+          {/* Left Symbols Strip (scrollable) */}
+          <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar flex items-center gap-1 pr-1.5">
+            {LEFT_RUST_SYMBOLS.map(sym => (
+              <button
+                key={sym}
+                type="button"
+                onPointerDown={e => triggerSymbol(e, sym)}
+                onClick={e => triggerSymbol(e, sym)}
+                className="shrink-0 min-w-[28px] h-7 px-1.5 flex items-center justify-center font-mono text-xs font-medium rounded bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-700 text-zinc-200 border border-zinc-800 hover:border-zinc-700 cursor-pointer select-none transition-colors"
+              >
+                {sym}
+              </button>
+            ))}
+          </div>
 
-            {/* Joystick Thumb Nub */}
+          {/* Centered Virtual Analog Joystick */}
+          <div className="shrink-0 px-2 flex items-center justify-center border-x border-zinc-800/80">
             <div
-              style={{
-                transform: `translate(${joystickPos.x}px, ${joystickPos.y}px)`,
-                transition: isDragging ? 'none' : 'transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1)',
-              }}
-              className="w-4 h-4 rounded-full bg-zinc-200 shadow-sm flex items-center justify-center pointer-events-none"
+              ref={joystickBaseRef}
+              onPointerDown={handleJoystickPointerDown}
+              onPointerMove={handleJoystickPointerMove}
+              onPointerUp={handleJoystickPointerUp}
+              onPointerCancel={handleJoystickPointerUp}
+              className="w-9 h-9 rounded-full bg-zinc-900 border border-zinc-700/80 shadow-inner relative flex items-center justify-center shrink-0 select-none touch-none cursor-grab active:cursor-grabbing"
+              title="Drag joystick to move cursor"
+              aria-label="Cursor Joystick"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
+              {/* Direction markers */}
+              <span className="absolute top-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">▲</span>
+              <span className="absolute bottom-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">▼</span>
+              <span className="absolute left-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">◀</span>
+              <span className="absolute right-0.5 text-[6px] text-zinc-600 font-mono select-none pointer-events-none leading-none">▶</span>
+
+              {/* Joystick Thumb Nub */}
+              <div
+                style={{
+                  transform: `translate(${joystickPos.x}px, ${joystickPos.y}px)`,
+                  transition: isDragging ? 'none' : 'transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+                }}
+                className="w-4 h-4 rounded-full bg-zinc-200 shadow-sm flex items-center justify-center pointer-events-none"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
+              </div>
             </div>
           </div>
+
+          {/* Right Symbols Strip (scrollable) + Dismiss Keyboard Button */}
+          <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar flex items-center gap-1 pl-1.5">
+            {RIGHT_RUST_SYMBOLS.map(sym => (
+              <button
+                key={sym}
+                type="button"
+                onPointerDown={e => triggerSymbol(e, sym)}
+                onClick={e => triggerSymbol(e, sym)}
+                className="shrink-0 min-w-[28px] h-7 px-1.5 flex items-center justify-center font-mono text-xs font-medium rounded bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-700 text-zinc-200 border border-zinc-800 hover:border-zinc-700 cursor-pointer select-none transition-colors"
+              >
+                {sym}
+              </button>
+            ))}
+
+            {/* Dismiss Keyboard Button pinned on the right */}
+            <button
+              type="button"
+              onPointerDown={e => {
+                e.preventDefault();
+                dismissKeyboard();
+              }}
+              onClick={dismissKeyboard}
+              className="sticky right-0 shrink-0 flex items-center gap-1 px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-300 hover:text-zinc-100 text-xs font-medium border border-zinc-700/60 cursor-pointer transition-colors shadow-sm ml-auto z-10"
+              title="Dismiss keyboard"
+              aria-label="Dismiss keyboard"
+            >
+              <Keyboard className="w-3.5 h-3.5 text-zinc-400" />
+              <ChevronDown className="w-3 h-3 text-zinc-400" />
+            </button>
+          </div>
         </div>
-
-        {/* Dismiss Keyboard Button (if keyboard is active) */}
-        {isKeyboardOpen && (
-          <button
-            type="button"
-            onPointerDown={e => {
-              e.preventDefault();
-              dismissKeyboard();
-            }}
-            onClick={dismissKeyboard}
-            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-300 hover:text-zinc-100 text-xs font-medium border border-zinc-700/60 cursor-pointer transition-colors"
-            title="Dismiss keyboard"
-            aria-label="Dismiss keyboard"
-          >
-            <Keyboard className="w-3.5 h-3.5 text-zinc-400" />
-            <ChevronDown className="w-3 h-3 text-zinc-400" />
-          </button>
-        )}
-
-        {/* Rust Symbols Horizontal Scroll */}
-        {RUST_SYMBOLS.map(sym => (
-          <button
-            key={sym}
-            type="button"
-            onPointerDown={e => triggerSymbol(e, sym)}
-            onClick={e => triggerSymbol(e, sym)}
-            className="shrink-0 min-w-[30px] h-7 px-2 flex items-center justify-center font-mono text-xs font-medium rounded bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-700 text-zinc-200 border border-zinc-800 hover:border-zinc-700 cursor-pointer select-none transition-colors"
-          >
-            {sym}
-          </button>
-        ))}
-      </div>
+      )}
     </div>
   );
 };
