@@ -72,6 +72,11 @@ interface RustlingsContextValue {
   showResetModal: boolean;
   setShowResetModal: (b: boolean) => void;
   resetAllProgress: () => void;
+  canInstall: boolean;
+  isInstalled: boolean;
+  showInstallBanner: boolean;
+  promptInstall: () => Promise<void>;
+  dismissInstallBanner: () => void;
 }
 
 const RustlingsContext = createContext<RustlingsContextValue | null>(null);
@@ -374,6 +379,66 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     mobileSidebarOpen,
   ]);
 
+  // ================= PWA INSTALLATION SUPPORT =================
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true
+    );
+  });
+  const [showInstallBanner, setShowInstallBanner] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return !localStorage.getItem('rustal_pwa_banner_dismissed');
+  });
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      // Prevent automatic prompt to give user our slick in-app experience
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const promptInstall = async () => {
+    if (deferredPrompt) {
+      await deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice?.outcome === 'accepted') {
+        setIsInstalled(true);
+        setShowInstallBanner(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      // Fallback instruction for browsers
+      alert(
+        'To install Rustal locally on Chrome / Edge:\n• Click the Install icon (⊕ / 📥) in your browser address bar\n• Or open browser menu (⋮) -> "Install Rustal"'
+      );
+    }
+  };
+
+  const dismissInstallBanner = () => {
+    setShowInstallBanner(false);
+    try {
+      localStorage.setItem('rustal_pwa_banner_dismissed', 'true');
+    } catch {}
+  };
+
   const value: RustlingsContextValue = {
     exercises,
     currentExercise,
@@ -422,6 +487,11 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     showResetModal,
     setShowResetModal,
     resetAllProgress,
+    canInstall: !!deferredPrompt,
+    isInstalled,
+    showInstallBanner,
+    promptInstall,
+    dismissInstallBanner,
   };
 
   return (

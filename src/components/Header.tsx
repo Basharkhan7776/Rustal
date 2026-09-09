@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Search,
   ChevronLeft,
@@ -8,6 +7,7 @@ import {
   Bookmark,
   Menu,
   MoreVertical,
+  Download,
 } from 'lucide-react';
 import { useRustlings } from '../context/RustlingsContext';
 import { Button } from './ui/Button';
@@ -33,6 +33,8 @@ export const Header: React.FC = () => {
     getShortcut,
     setShowSettingsModal,
     setShowCommandPalette,
+    promptInstall,
+    isInstalled,
   } = useRustlings();
 
   const isCompleted = completedIds.has(currentExercise.id);
@@ -278,6 +280,16 @@ export const Header: React.FC = () => {
           </div>
 
           <DropdownMenuSeparator />
+
+          {/* Install App */}
+          {!isInstalled && (
+            <DropdownMenuItem
+              icon={<Download className="w-3.5 h-3.5 text-zinc-400" />}
+              onClick={promptInstall}
+            >
+              Install Rustal App
+            </DropdownMenuItem>
+          )}
 
           {/* Settings & Dashboard */}
           <DropdownMenuItem

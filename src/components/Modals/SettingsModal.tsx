@@ -9,6 +9,8 @@ import {
   Keyboard,
   Command,
   Monitor,
+  CheckCircle2,
+  Smartphone,
 } from 'lucide-react';
 import { useRustlings } from '../../context/RustlingsContext';
 import { exportProgressSnapshot, importProgressSnapshot } from '../../lib/storage';
@@ -23,6 +25,8 @@ export const SettingsModal: React.FC = () => {
     settings,
     updateSettings,
     resetAllProgress,
+    promptInstall,
+    isInstalled,
   } = useRustlings();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -293,6 +297,42 @@ export const SettingsModal: React.FC = () => {
                 {importStatus}
               </div>
             )}
+          </div>
+        </div>
+
+        {/* PWA Local Installation */}
+        <div className="space-y-2.5">
+          <h4 className="font-semibold uppercase tracking-wider text-[10px] text-zinc-400 flex items-center gap-1.5">
+            <Smartphone className="w-3 h-3 text-zinc-400" />
+            Install App Locally (PWA)
+          </h4>
+
+          <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span className="font-medium text-zinc-200 block text-xs">Offline Desktop & Mobile App</span>
+              <span className="text-[11px] text-zinc-400">
+                Install Rustal as a standalone app with its own window, fast launch, and 100% offline access.
+              </span>
+            </div>
+
+            <div>
+              {isInstalled ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-800/60 text-emerald-400 text-xs font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Installed as Standalone App
+                </span>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={promptInstall}
+                  className="text-[11px] gap-1.5 font-medium"
+                >
+                  <Download className="w-3.5 h-3.5 text-zinc-950" />
+                  Install App Locally
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

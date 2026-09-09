@@ -10,6 +10,7 @@ import { MobileTabBar } from './components/MobileTabBar';
 import { CommandPalette } from './components/CommandPalette';
 import { SolutionModal } from './components/Modals/SolutionModal';
 import { SettingsModal } from './components/Modals/SettingsModal';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
 
 const PANEL_STORAGE_KEY = 'rustal_v1_panel_sizes';
 
@@ -174,6 +175,9 @@ const AppContent: React.FC = () => {
       <CommandPalette />
       <SolutionModal />
       <SettingsModal />
+
+      {/* PWA Offline Installation Banner */}
+      <PWAInstallBanner />
     </div>
   );
 };
