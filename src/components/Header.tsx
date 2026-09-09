@@ -1,16 +1,11 @@
 import React from 'react';
 import {
-  Play,
-  RotateCcw,
-  Sparkles,
   Search,
   ChevronLeft,
   ChevronRight,
   Settings,
   CheckCircle2,
   Bookmark,
-  Loader2,
-  Terminal,
   Menu,
   MoreVertical,
 } from 'lucide-react';
@@ -28,20 +23,14 @@ export const Header: React.FC = () => {
     currentExercise,
     nextExercise,
     prevExercise,
-    runCode,
-    isRunning,
     completedCount,
     totalCount,
     completedIds,
     toggleCompleted,
     bookmarkedIds,
     toggleBookmark,
-    resetCurrentCode,
-    terminalCollapsed,
-    toggleTerminal,
     toggleMobileSidebar,
     getShortcut,
-    setShowSolutionModal,
     setShowSettingsModal,
     setShowCommandPalette,
   } = useRustlings();
@@ -183,62 +172,6 @@ export const Header: React.FC = () => {
           </Button>
         </Tooltip>
 
-        {/* Reset starter code button */}
-        <Tooltip content="Reset to starter code">
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={resetCurrentCode}
-            className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
-          >
-            <RotateCcw className="w-4 h-4 text-zinc-400" />
-          </Button>
-        </Tooltip>
-
-        {/* View Solution button */}
-        <Tooltip content="Reveal solution">
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => setShowSolutionModal(true)}
-            className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
-          >
-            <Sparkles className="w-4 h-4 text-zinc-400" />
-          </Button>
-        </Tooltip>
-
-        {/* Run & Test Button */}
-        <Tooltip content="Run & Test" shortcut={getShortcut('⌘⇧↵', 'Ctrl+Shift+Enter')}>
-          <Button
-            variant="primary"
-            size="icon"
-            disabled={isRunning}
-            onClick={runCode}
-            className="h-8 w-8"
-          >
-            {isRunning ? (
-              <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-            ) : (
-              <Play className="w-4 h-4 fill-zinc-950 text-zinc-950 ml-0.5" />
-            )}
-          </Button>
-        </Tooltip>
-
-        {/* Terminal Toggle Button */}
-        <Tooltip
-          content={terminalCollapsed ? 'Expand terminal' : 'Collapse terminal'}
-          shortcut={getShortcut('⌘T', 'Ctrl+T')}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTerminal}
-            className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
-          >
-            <Terminal className="w-4 h-4 text-zinc-400" />
-          </Button>
-        </Tooltip>
-
         {/* Settings button */}
         <Tooltip content="Settings & Data">
           <Button
@@ -259,6 +192,7 @@ export const Header: React.FC = () => {
           <Button
             variant="ghost"
             size="icon"
+            disabled={currentExercise.order <= 1}
             onClick={prevExercise}
             className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
             aria-label="Previous exercise"
@@ -269,6 +203,7 @@ export const Header: React.FC = () => {
           <Button
             variant="ghost"
             size="icon"
+            disabled={currentExercise.order >= totalCount}
             onClick={nextExercise}
             className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
             aria-label="Next exercise"
@@ -276,22 +211,6 @@ export const Header: React.FC = () => {
             <ChevronRight className="w-4 h-4 text-zinc-400" />
           </Button>
         </div>
-
-        {/* Mobile Primary Run Button */}
-        <Button
-          variant="primary"
-          size="icon"
-          disabled={isRunning}
-          onClick={runCode}
-          className="h-8 w-8"
-          aria-label="Run and test code"
-        >
-          {isRunning ? (
-            <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-          ) : (
-            <Play className="w-4 h-4 fill-zinc-950 text-zinc-950 ml-0.5" />
-          )}
-        </Button>
 
         {/* Mobile More Actions Dropdown Menu */}
         <DropdownMenu
@@ -338,22 +257,6 @@ export const Header: React.FC = () => {
             onClick={() => toggleBookmark(currentExercise.id)}
           >
             {isBookmarked ? 'Remove Bookmark' : 'Bookmark Exercise'}
-          </DropdownMenuItem>
-
-          {/* Reset Code */}
-          <DropdownMenuItem
-            icon={<RotateCcw className="w-3.5 h-3.5 text-zinc-400" />}
-            onClick={resetCurrentCode}
-          >
-            Reset Starter Code
-          </DropdownMenuItem>
-
-          {/* Reveal Solution */}
-          <DropdownMenuItem
-            icon={<Sparkles className="w-3.5 h-3.5 text-zinc-400" />}
-            onClick={() => setShowSolutionModal(true)}
-          >
-            Reveal Official Solution
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
