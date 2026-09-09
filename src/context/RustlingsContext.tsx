@@ -77,6 +77,8 @@ interface RustlingsContextValue {
   showInstallBanner: boolean;
   promptInstall: () => Promise<void>;
   dismissInstallBanner: () => void;
+  isEditorFocused: boolean;
+  setIsEditorFocused: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const RustlingsContext = createContext<RustlingsContextValue | null>(null);
@@ -111,6 +113,7 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
 
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed' | 'bookmarked'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isEditorFocused, setIsEditorFocused] = useState<boolean>(false);
 
   const [showCommandPalette, setShowCommandPalette] = useState<boolean>(false);
   const [showSolutionModal, setShowSolutionModal] = useState<boolean>(false);
@@ -492,6 +495,8 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     showInstallBanner,
     promptInstall,
     dismissInstallBanner,
+    isEditorFocused,
+    setIsEditorFocused,
   };
 
   return (

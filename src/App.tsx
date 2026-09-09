@@ -45,8 +45,10 @@ const AppContent: React.FC = () => {
     setTerminalCollapsed,
     toggleTerminal,
     mobileTab,
+    isEditorFocused,
   } = useRustlings();
   const { isKeyboardOpen, viewportHeight } = useKeyboardViewport();
+  const isInputActive = isKeyboardOpen || isEditorFocused;
   const [panelSizes, setPanelSizes] = useState<PanelSizes>(getSavedPanels);
   const startSizesRef = useRef<PanelSizes>(panelSizes);
   const [isMobileScreen, setIsMobileScreen] = useState(() =>
@@ -164,7 +166,7 @@ const AppContent: React.FC = () => {
       <div
         className={cn(
           'flex md:hidden flex-1 flex-col min-h-0 overflow-hidden relative',
-          isKeyboardOpen ? 'pb-0' : 'pb-[56px]'
+          isInputActive ? 'pb-0' : 'pb-[56px]'
         )}
       >
         <div className="flex-1 flex min-h-0 overflow-hidden">
@@ -189,7 +191,7 @@ const AppContent: React.FC = () => {
         </div>
 
         {/* Bottom 5-Section Navigation Bar */}
-        <MobileTabBar hidden={isKeyboardOpen} />
+        <MobileTabBar hidden={isInputActive} />
       </div>
 
       {/* Mobile Slide-Out Drawer Overlay */}

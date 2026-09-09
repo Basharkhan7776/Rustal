@@ -40,14 +40,34 @@ export const CodeEditor: React.FC = () => {
     prevExercise,
     setShowCommandPalette,
     getShortcut,
+    isEditorFocused,
+    setIsEditorFocused,
+    mobileTab,
   } = useRustlings();
 
   const { isKeyboardOpen, viewportHeight, dismissKeyboard } = useKeyboardViewport();
   const editorRef = useRef<any>(null);
   const lastSymbolActionRef = useRef<number>(0);
+  const isInteractingWithToolbarRef = useRef(false);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
+
+  const handleDismissKeyboard = useCallback(() => {
+    setIsEditorFocused(false);
+    dismissKeyboard();
+    if (editorRef.current) {
+      const domNode = editorRef.current.getDomNode();
+      const textarea = domNode?.querySelector('textarea');
+      if (textarea) textarea.blur();
+    }
+  }, [dismissKeyboard, setIsEditorFocused]);
+
+  useEffect(() => {
+    if (mobileTab !== 'code') {
+      setIsEditorFocused(false);
+    }
+  }, [mobileTab, setIsEditorFocused]);
 
   // Virtual Joystick navigation state & refs
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
@@ -249,11 +269,43 @@ export const CodeEditor: React.FC = () => {
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
 
+    // Track when cursor is focused in editor so mobile shortcuts & joystick appear
+    editor.onDidFocusEditorText(() => {
+      setIsEditorFocused(true);
+    });
+
+    editor.onDidFocusEditorWidget(() => {
+      setIsEditorFocused(true);
+    });
+
+    editor.onMouseDown(() => {
+      setIsEditorFocused(true);
+    });
+
     // Keep cursor visible when typing on mobile screens
     editor.onDidChangeCursorPosition(e => {
+      setIsEditorFocused(true);
       if (window.innerWidth < 768) {
         editor.revealPositionInCenterIfOutsideViewport(e.position);
       }
+    });
+
+    editor.onDidBlurEditorText(() => {
+      setTimeout(() => {
+        if (isInteractingWithToolbarRef.current) return;
+        if (!editor.hasTextFocus() && !editor.hasWidgetFocus()) {
+          setIsEditorFocused(false);
+        }
+      }, 200);
+    });
+
+    editor.onDidBlurEditorWidget(() => {
+      setTimeout(() => {
+        if (isInteractingWithToolbarRef.current) return;
+        if (!editor.hasTextFocus() && !editor.hasWidgetFocus()) {
+          setIsEditorFocused(false);
+        }
+      }, 200);
     });
 
     // Define custom coss.com dark theme
@@ -437,9 +489,19 @@ export const CodeEditor: React.FC = () => {
         />
       </div>
 
-      {/* Mobile Center Joystick & Quick Symbol Toolbar (Shown only when virtual keyboard is active) */}
-      {isKeyboardOpen && (
-        <div className="md:hidden shrink-0 h-11 bg-[#0c0c0f] border-t border-zinc-800/80 flex items-center px-1.5 select-none z-20">
+      {/* Mobile Center Joystick & Quick Symbol Toolbar (Shown when cursor is focused in editor or keyboard is active) */}
+      {(isEditorFocused || isKeyboardOpen) && (
+        <div
+          onPointerDown={() => {
+            isInteractingWithToolbarRef.current = true;
+          }}
+          onPointerUp={() => {
+            setTimeout(() => {
+              isInteractingWithToolbarRef.current = false;
+            }, 300);
+          }}
+          className="md:hidden shrink-0 h-11 bg-[#0c0c0f] border-t border-zinc-800/80 flex items-center px-1.5 select-none z-20"
+        >
           {/* Left Symbols Strip (scrollable) */}
           <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar flex items-center gap-1 pr-1.5">
             {LEFT_RUST_SYMBOLS.map(sym => (
@@ -505,9 +567,9 @@ export const CodeEditor: React.FC = () => {
               type="button"
               onPointerDown={e => {
                 e.preventDefault();
-                dismissKeyboard();
+                handleDismissKeyboard();
               }}
-              onClick={dismissKeyboard}
+              onClick={handleDismissKeyboard}
               className="sticky right-0 shrink-0 flex items-center gap-1 px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-300 hover:text-zinc-100 text-xs font-medium border border-zinc-700/60 cursor-pointer transition-colors shadow-sm ml-auto z-10"
               title="Dismiss keyboard"
               aria-label="Dismiss keyboard"
