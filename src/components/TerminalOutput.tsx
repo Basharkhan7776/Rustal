@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useRustlings } from '../context/RustlingsContext';
 import { parseAnsi } from '../lib/ansi';
-import { formatTime } from '../lib/utils';
+import { formatTime, cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Tooltip } from './ui/Tooltip';
 import {
@@ -26,12 +26,14 @@ export interface TerminalOutputProps {
   height: number;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  isMobile?: boolean;
 }
 
 export const TerminalOutput: React.FC<TerminalOutputProps> = ({
   height,
   collapsed,
   onToggleCollapse,
+  isMobile = false,
 }) => {
   const { isRunning, lastResult, clearLastResult, nextExercise, getShortcut } = useRustlings();
 
@@ -66,10 +68,15 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
     return parseAnsi(combinedOutput);
   }, [combinedOutput]);
 
+  const showBody = isMobile || !collapsed;
+
   return (
     <div
-      style={{ height: collapsed ? 36 : height }}
-      className="bg-[#09090b] flex flex-col shrink-0 select-none overflow-hidden"
+      style={isMobile ? undefined : { height: collapsed ? 36 : height }}
+      className={cn(
+        'bg-[#09090b] flex flex-col select-none overflow-hidden',
+        isMobile ? 'w-full h-full flex-1' : 'shrink-0'
+      )}
     >
       {/* Terminal Header */}
       <div className="h-9 px-3 bg-[#0c0c0f] border-b border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400 shrink-0">
@@ -156,26 +163,28 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
             </Tooltip>
           </div>
 
-          <Tooltip
-            content={collapsed ? 'Expand terminal' : 'Collapse terminal'}
-            shortcut={getShortcut('⌘T', 'Ctrl+T')}
-          >
-            <button
-              onClick={onToggleCollapse}
-              className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+          {!isMobile && (
+            <Tooltip
+              content={collapsed ? 'Expand terminal' : 'Collapse terminal'}
+              shortcut={getShortcut('⌘T', 'Ctrl+T')}
             >
-              {collapsed ? (
-                <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
-              ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
-              )}
-            </button>
-          </Tooltip>
+              <button
+                onClick={onToggleCollapse}
+                className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+              >
+                {collapsed ? (
+                  <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                )}
+              </button>
+            </Tooltip>
+          )}
         </div>
       </div>
 
       {/* Terminal Body */}
-      {!collapsed && (
+      {showBody && (
         <div
           style={{ fontSize: `${fontSize}px` }}
           className="flex-1 p-3 overflow-y-auto font-mono leading-relaxed text-zinc-300 bg-[#08080a] select-text"

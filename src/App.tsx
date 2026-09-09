@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { RustlingsProvider, useRustlings } from './context/RustlingsContext';
 import { Header } from './components/Header';
-import { Sidebar } from './components/Sidebar';
+import { Sidebar, MobileSidebarDrawer } from './components/Sidebar';
 import { CodeEditor } from './components/CodeEditor';
 import { InstructionsPane } from './components/InstructionsPane';
 import { TerminalOutput } from './components/TerminalOutput';
 import { ResizeHandle } from './components/ui/ResizeHandle';
+import { MobileTabBar } from './components/MobileTabBar';
 import { CommandPalette } from './components/CommandPalette';
 import { SolutionModal } from './components/Modals/SolutionModal';
 import { SettingsModal } from './components/Modals/SettingsModal';
@@ -40,6 +41,7 @@ const AppContent: React.FC = () => {
     terminalCollapsed,
     setTerminalCollapsed,
     toggleTerminal,
+    mobileTab,
   } = useRustlings();
   const [panelSizes, setPanelSizes] = useState<PanelSizes>(getSavedPanels);
   const startSizesRef = useRef<PanelSizes>(panelSizes);
@@ -86,8 +88,8 @@ const AppContent: React.FC = () => {
       {/* Top Header Navbar */}
       <Header />
 
-      {/* Main Workspace with 4-way Resizable Panels */}
-      <div className="flex-1 flex min-h-0 overflow-hidden">
+      {/* Desktop Workspace with 4-way Resizable Panels (>= 768px) */}
+      <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
         {/* Panel 1: Sidebar */}
         <Sidebar
           width={panelSizes.sidebarWidth}
@@ -137,6 +139,36 @@ const AppContent: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Mobile Workspace: 5-Section Single-View (< 768px) */}
+      <div className="flex md:hidden flex-1 flex-col min-h-0 overflow-hidden relative pb-[56px]">
+        <div className="flex-1 flex min-h-0 overflow-hidden">
+          {mobileTab === 'code' && <CodeEditor />}
+          {mobileTab === 'terminal' && (
+            <TerminalOutput
+              isMobile
+              height={0}
+              collapsed={false}
+              onToggleCollapse={() => {}}
+            />
+          )}
+          {mobileTab === 'theory' && (
+            <InstructionsPane isMobile controlledTab="theory" width={0} />
+          )}
+          {mobileTab === 'hint' && (
+            <InstructionsPane isMobile controlledTab="hint" width={0} />
+          )}
+          {mobileTab === 'solution' && (
+            <InstructionsPane isMobile controlledTab="solution" width={0} />
+          )}
+        </div>
+
+        {/* Bottom 5-Section Navigation Bar */}
+        <MobileTabBar />
+      </div>
+
+      {/* Mobile Slide-Out Drawer Overlay */}
+      <MobileSidebarDrawer />
 
       {/* Interactive Modals */}
       <CommandPalette />

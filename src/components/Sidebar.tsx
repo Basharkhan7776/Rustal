@@ -9,22 +9,17 @@ import {
   Layers,
   PanelLeftClose,
   PanelLeft,
+  X,
 } from 'lucide-react';
 import { useRustlings } from '../context/RustlingsContext';
 import { cn } from '../lib/utils';
 import { Tooltip } from './ui/Tooltip';
 
-export interface SidebarProps {
-  width: number;
-  collapsed: boolean;
-  onToggleCollapse: () => void;
+interface SidebarContentProps {
+  onSelectExercise?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  width,
-  collapsed,
-  onToggleCollapse,
-}) => {
+export const SidebarContent: React.FC<SidebarContentProps> = ({ onSelectExercise }) => {
   const {
     exercises,
     currentExercise,
@@ -47,10 +42,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setPrevExerciseCategory(currentExercise.category);
     setOpenCategory(currentExercise.category);
   }
-
-  const toggleCategory = (catId: string) => {
-    setOpenCategory(prev => ((prev ?? effectiveOpenCategory) === catId ? null : catId));
-  };
 
   const categories = useMemo(() => {
     const map = new Map<string, {
@@ -100,7 +91,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       .filter(cat => cat.exercises.length > 0);
   }, [categories, searchQuery, filter, completedIds, bookmarkedIds]);
 
-  // If user is searching and currently open category has no matches, focus on the first matching category
   let effectiveOpenCategory = openCategory;
   if (searchQuery.trim() && filteredCategories.length > 0) {
     const hasMatch = filteredCategories.some(
@@ -112,71 +102,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }
 
-  if (collapsed) {
-    return (
-      <div className="w-12 border-r border-zinc-800/80 bg-[#09090b] flex flex-col items-center py-2.5 gap-3 shrink-0 select-none">
-        <Tooltip content="Expand Sidebar" shortcut={getShortcut('⌘B', 'Ctrl+B')} side="right">
-          <button
-            onClick={onToggleCollapse}
-            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 transition-colors"
-          >
-            <PanelLeft className="w-4 h-4 text-zinc-400" />
-          </button>
-        </Tooltip>
-        <div className="h-px w-6 bg-zinc-800/80" />
-        <div className="flex-1 flex flex-col items-center gap-1.5 overflow-y-auto w-full px-1">
-          {exercises.map(ex => {
-            const isDone = completedIds.has(ex.id);
-            const isActive = ex.id === currentExercise.id;
-            return (
-              <Tooltip key={ex.id} content={`${ex.title} (${ex.categoryTitle})`} side="right">
-                <button
-                  onClick={() => setCurrentExerciseId(ex.id)}
-                  className={cn(
-                    'w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-mono transition-all',
-                    isActive
-                      ? 'bg-zinc-800 text-zinc-100 border border-zinc-700 font-bold'
-                      : isDone
-                      ? 'text-zinc-300 hover:bg-zinc-850'
-                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'
-                  )}
-                >
-                  {isDone ? '✓' : ex.order}
-                </button>
-              </Tooltip>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
+  const toggleCategory = (catId: string) => {
+    setOpenCategory(prev => ((prev ?? effectiveOpenCategory) === catId ? null : catId));
+  };
 
   return (
-    <aside
-      style={{ width }}
-      className="border-r border-zinc-800/80 bg-[#09090b] flex flex-col shrink-0 select-none overflow-hidden h-full"
-    >
-      {/* Sidebar Header */}
-      <div className="p-3 border-b border-zinc-800/80 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200">
-          <Layers className="w-3.5 h-3.5 text-zinc-400" />
-          <span>Curriculum Modules</span>
-          <span className="text-[10px] text-zinc-400 bg-zinc-850 px-1.5 py-0.2 rounded-full border border-zinc-800">
-            {exercises.length}
-          </span>
-        </div>
-        <Tooltip content="Collapse Sidebar" shortcut={getShortcut('⌘B', 'Ctrl+B')} side="bottom">
-          <button
-            onClick={onToggleCollapse}
-            className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
-          >
-            <PanelLeftClose className="w-4 h-4 text-zinc-400" />
-          </button>
-        </Tooltip>
-      </div>
-
+    <>
       {/* Search Input (Playground UI style) */}
-      <div className="p-2.5 border-b border-zinc-800/60">
+      <div className="p-2.5 border-b border-zinc-800/60 shrink-0">
         <div className="relative flex items-center bg-[#121215] border border-zinc-800 rounded-lg px-2.5 py-1.5 focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-zinc-600/30 transition-all">
           <Search className="w-3.5 h-3.5 text-zinc-400 mr-2 shrink-0 pointer-events-none" />
           <input
@@ -201,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1 mt-2">
+        <div className="flex items-center gap-1 mt-2 shrink-0">
           {(['all', 'pending', 'completed', 'bookmarked'] as const).map(f => {
             const count =
               f === 'all'
@@ -259,10 +192,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className={cn(
-                      "text-[10px] font-mono px-1.5 py-0.2 rounded-full border",
+                      'text-[10px] font-mono px-1.5 py-0.2 rounded-full border',
                       isCatAllDone
-                        ? "bg-zinc-800 text-zinc-200 border-zinc-700"
-                        : "text-zinc-400 bg-zinc-850 border-zinc-800"
+                        ? 'bg-zinc-800 text-zinc-200 border-zinc-700'
+                        : 'text-zinc-400 bg-zinc-850 border-zinc-800'
                     )}>
                       {completedInCat}/{cat.exercises.length}
                     </span>
@@ -280,7 +213,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       return (
                         <button
                           key={ex.id}
-                          onClick={() => setCurrentExerciseId(ex.id)}
+                          onClick={() => {
+                            setCurrentExerciseId(ex.id);
+                            onSelectExercise?.();
+                          }}
                           className={cn(
                             'w-full text-left px-2 py-1 rounded-md text-xs flex items-center justify-between gap-1.5 transition-all group',
                             isActive
@@ -301,7 +237,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <span className="truncate">{ex.title}</span>
                           </div>
 
-                          {/* Removed run badge - now only bookmark indicator if bookmarked */}
                           {isBookmarked && (
                             <Bookmark className="w-3 h-3 fill-zinc-300 text-zinc-300 shrink-0" />
                           )}
@@ -317,10 +252,127 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Sidebar Footer */}
-      <div className="p-2.5 border-t border-zinc-800/80 bg-zinc-950/40 text-[11px] text-zinc-500 flex items-center justify-between">
-        <span>Press <kbd className="px-1 py-0.2 text-[10px] font-mono bg-zinc-850 text-zinc-400 rounded border border-zinc-800">{getShortcut('⌘K', 'Ctrl+K')}</kbd> to quick switch</span>
+      <div className="p-2.5 border-t border-zinc-800/80 bg-zinc-950/40 text-[11px] text-zinc-500 flex items-center justify-between shrink-0">
+        <span>Press <kbd className="px-1 py-0.2 text-[10px] font-mono bg-zinc-850 text-zinc-400 rounded border border-zinc-800">{getShortcut('⌘K', 'Ctrl+K')}</kbd> to switch</span>
         <span className="font-mono">{completedIds.size}/{exercises.length}</span>
       </div>
+    </>
+  );
+};
+
+export interface SidebarProps {
+  width: number;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({
+  width,
+  collapsed,
+  onToggleCollapse,
+}) => {
+  const { exercises, currentExercise, setCurrentExerciseId, completedIds, getShortcut } = useRustlings();
+
+  if (collapsed) {
+    return (
+      <div className="w-12 border-r border-zinc-800/80 bg-[#09090b] hidden md:flex flex-col items-center py-2.5 gap-3 shrink-0 select-none">
+        <Tooltip content="Expand Sidebar" shortcut={getShortcut('⌘B', 'Ctrl+B')} side="right">
+          <button
+            onClick={onToggleCollapse}
+            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 transition-colors"
+          >
+            <PanelLeft className="w-4 h-4 text-zinc-400" />
+          </button>
+        </Tooltip>
+        <div className="h-px w-6 bg-zinc-800/80" />
+        <div className="flex-1 flex flex-col items-center gap-1.5 overflow-y-auto w-full px-1">
+          {exercises.map(ex => {
+            const isDone = completedIds.has(ex.id);
+            const isActive = ex.id === currentExercise.id;
+            return (
+              <Tooltip key={ex.id} content={`${ex.title} (${ex.categoryTitle})`} side="right">
+                <button
+                  onClick={() => setCurrentExerciseId(ex.id)}
+                  className={cn(
+                    'w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-mono transition-all',
+                    isActive
+                      ? 'bg-zinc-800 text-zinc-100 border border-zinc-700 font-bold'
+                      : isDone
+                      ? 'text-zinc-300 hover:bg-zinc-850'
+                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900'
+                  )}
+                >
+                  {isDone ? '✓' : ex.order}
+                </button>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <aside
+      style={{ width }}
+      className="border-r border-zinc-800/80 bg-[#09090b] hidden md:flex flex-col shrink-0 select-none overflow-hidden h-full"
+    >
+      {/* Desktop Sidebar Header */}
+      <div className="p-3 border-b border-zinc-800/80 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200">
+          <Layers className="w-3.5 h-3.5 text-zinc-400" />
+          <span>Curriculum Modules</span>
+          <span className="text-[10px] text-zinc-400 bg-zinc-850 px-1.5 py-0.2 rounded-full border border-zinc-800">
+            {exercises.length}
+          </span>
+        </div>
+        <Tooltip content="Collapse Sidebar" shortcut={getShortcut('⌘B', 'Ctrl+B')} side="bottom">
+          <button
+            onClick={onToggleCollapse}
+            className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+          >
+            <PanelLeftClose className="w-4 h-4 text-zinc-400" />
+          </button>
+        </Tooltip>
+      </div>
+
+      <SidebarContent />
     </aside>
+  );
+};
+
+export const MobileSidebarDrawer: React.FC = () => {
+  const { exercises, mobileSidebarOpen, toggleMobileSidebar } = useRustlings();
+
+  if (!mobileSidebarOpen) return null;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs md:hidden animate-in fade-in duration-200"
+        onClick={toggleMobileSidebar}
+      />
+      <aside className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-xs sm:max-w-sm bg-[#09090b] shadow-2xl border-r border-zinc-800 flex md:hidden flex-col animate-in slide-in-from-left duration-200 select-none">
+        {/* Mobile Drawer Header */}
+        <div className="p-3 border-b border-zinc-800/80 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200">
+            <Layers className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Curriculum Modules</span>
+            <span className="text-[10px] text-zinc-400 bg-zinc-850 px-1.5 py-0.2 rounded-full border border-zinc-800">
+              {exercises.length}
+            </span>
+          </div>
+          <button
+            onClick={toggleMobileSidebar}
+            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+            aria-label="Close drawer"
+          >
+            <X className="w-4 h-4 text-zinc-400" />
+          </button>
+        </div>
+
+        <SidebarContent onSelectExercise={toggleMobileSidebar} />
+      </aside>
+    </>
   );
 };

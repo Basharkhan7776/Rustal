@@ -24,14 +24,22 @@ import {
 
 export interface InstructionsPaneProps {
   width: number;
+  isMobile?: boolean;
+  controlledTab?: 'theory' | 'hint' | 'solution';
 }
 
-export const InstructionsPane: React.FC<InstructionsPaneProps> = ({ width }) => {
+export const InstructionsPane: React.FC<InstructionsPaneProps> = ({
+  width,
+  isMobile,
+  controlledTab,
+}) => {
   const { currentExercise, applySolution } = useRustlings();
   const [activeTab, setActiveTab] = useState<'theory' | 'hint' | 'solution'>('theory');
   const [hintRevealed, setHintRevealed] = useState<boolean>(false);
   const [solutionRevealed, setSolutionRevealed] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+
+  const effectiveTab = controlledTab ?? activeTab;
 
   // Font size adjustment with min and max (just like code section)
   const [fontSize, setFontSize] = useState<number>(() => getStoredInstructionsFontSize(12));
@@ -62,49 +70,61 @@ export const InstructionsPane: React.FC<InstructionsPaneProps> = ({ width }) => 
 
   return (
     <div
-      style={{ width }}
-      className="flex flex-col h-full bg-[#0c0c0f] shrink-0 select-none overflow-hidden"
+      style={isMobile ? undefined : { width }}
+      className={cn(
+        'flex flex-col bg-[#0c0c0f] select-none overflow-hidden',
+        isMobile ? 'w-full h-full flex-1' : 'h-full shrink-0'
+      )}
     >
       {/* Tab Switcher & Rightmost Font Zoom Controls */}
       <div className="h-9 px-3 border-b border-zinc-800/80 bg-[#09090b] flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-1 bg-zinc-900/90 p-0.5 rounded-lg border border-zinc-800">
-          <button
-            onClick={() => setActiveTab('theory')}
-            className={cn(
-              'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5',
-              activeTab === 'theory'
-                ? 'bg-zinc-800 text-zinc-100 shadow-xs'
-                : 'text-zinc-400 hover:text-zinc-200'
-            )}
-          >
-            <BookOpen className="w-3 h-3 text-zinc-400" />
-            Theory
-          </button>
-          <button
-            onClick={() => setActiveTab('hint')}
-            className={cn(
-              'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5',
-              activeTab === 'hint'
-                ? 'bg-zinc-800 text-zinc-100 shadow-xs'
-                : 'text-zinc-400 hover:text-zinc-200'
-            )}
-          >
-            <HelpCircle className="w-3 h-3 text-zinc-400" />
-            Hint
-          </button>
-          <button
-            onClick={() => setActiveTab('solution')}
-            className={cn(
-              'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5',
-              activeTab === 'solution'
-                ? 'bg-zinc-800 text-zinc-100 shadow-xs'
-                : 'text-zinc-400 hover:text-zinc-200'
-            )}
-          >
-            <Sparkles className="w-3 h-3 text-zinc-400" />
-            Solution
-          </button>
-        </div>
+        {isMobile ? (
+          <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-200">
+            {effectiveTab === 'theory' && <BookOpen className="w-3.5 h-3.5 text-zinc-400" />}
+            {effectiveTab === 'hint' && <HelpCircle className="w-3.5 h-3.5 text-zinc-400" />}
+            {effectiveTab === 'solution' && <Sparkles className="w-3.5 h-3.5 text-zinc-400" />}
+            <span className="capitalize">{effectiveTab === 'theory' ? 'Theory & Guide' : effectiveTab === 'hint' ? 'Hint' : 'Solution'}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 bg-zinc-900/90 p-0.5 rounded-lg border border-zinc-800">
+            <button
+              onClick={() => setActiveTab('theory')}
+              className={cn(
+                'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5',
+                effectiveTab === 'theory'
+                  ? 'bg-zinc-800 text-zinc-100 shadow-xs'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              )}
+            >
+              <BookOpen className="w-3 h-3 text-zinc-400" />
+              Theory
+            </button>
+            <button
+              onClick={() => setActiveTab('hint')}
+              className={cn(
+                'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5',
+                effectiveTab === 'hint'
+                  ? 'bg-zinc-800 text-zinc-100 shadow-xs'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              )}
+            >
+              <HelpCircle className="w-3 h-3 text-zinc-400" />
+              Hint
+            </button>
+            <button
+              onClick={() => setActiveTab('solution')}
+              className={cn(
+                'px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1.5',
+                effectiveTab === 'solution'
+                  ? 'bg-zinc-800 text-zinc-100 shadow-xs'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              )}
+            >
+              <Sparkles className="w-3 h-3 text-zinc-400" />
+              Solution
+            </button>
+          </div>
+        )}
 
         {/* Rightmost Controls: Font Size + / - with Tooltips and min/max */}
         <div className="flex items-center gap-2">
@@ -141,7 +161,7 @@ export const InstructionsPane: React.FC<InstructionsPaneProps> = ({ width }) => 
         style={{ fontSize: `${fontSize}px` }}
         className="flex-1 overflow-y-auto p-3 text-zinc-300 leading-relaxed space-y-3"
       >
-        {activeTab === 'theory' && (
+        {effectiveTab === 'theory' && (
           <div className="space-y-3">
             {/* Exercise Title & Instructions */}
             <div className="border border-zinc-800/80 bg-zinc-900/40 rounded-xl p-3">
@@ -191,7 +211,7 @@ export const InstructionsPane: React.FC<InstructionsPaneProps> = ({ width }) => 
           </div>
         )}
 
-        {activeTab === 'hint' && (
+        {effectiveTab === 'hint' && (
           <div className="space-y-3">
             <div className="border border-zinc-800/80 bg-zinc-900/40 rounded-xl p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">
@@ -237,7 +257,7 @@ export const InstructionsPane: React.FC<InstructionsPaneProps> = ({ width }) => 
           </div>
         )}
 
-        {activeTab === 'solution' && (
+        {effectiveTab === 'solution' && (
           <div className="space-y-3">
             <div className="border border-zinc-800/80 bg-zinc-900/40 rounded-xl p-3.5 space-y-2.5">
               <div className="flex items-center justify-between">

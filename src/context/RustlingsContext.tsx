@@ -22,6 +22,8 @@ import { executeRustCode } from '../services/compiler';
 
 const exercises: Exercise[] = rawExercises as Exercise[];
 
+export type MobileTab = 'code' | 'terminal' | 'theory' | 'hint' | 'solution';
+
 interface RustlingsContextValue {
   exercises: Exercise[];
   currentExercise: Exercise;
@@ -55,6 +57,11 @@ interface RustlingsContextValue {
   terminalCollapsed: boolean;
   setTerminalCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   toggleTerminal: () => void;
+  mobileTab: MobileTab;
+  setMobileTab: (tab: MobileTab) => void;
+  mobileSidebarOpen: boolean;
+  setMobileSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleMobileSidebar: () => void;
   getShortcut: (mac: string, win: string) => string;
   showCommandPalette: boolean;
   setShowCommandPalette: (b: boolean) => void;
@@ -107,6 +114,8 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [terminalCollapsed, setTerminalCollapsed] = useState<boolean>(false);
+  const [mobileTab, setMobileTab] = useState<MobileTab>('code');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed(prev => !prev);
@@ -114,6 +123,10 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
 
   const toggleTerminal = useCallback(() => {
     setTerminalCollapsed(prev => !prev);
+  }, []);
+
+  const toggleMobileSidebar = useCallback(() => {
+    setMobileSidebarOpen(prev => !prev);
   }, []);
 
   const getShortcut = useCallback(
@@ -135,6 +148,7 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
       setCurrentId(id);
       setStoredCurrentExercise(id);
       setLastResult(null);
+      setMobileSidebarOpen(false);
     }
   }, []);
 
@@ -217,6 +231,11 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     setIsRunning(true);
     setLastResult(null);
 
+    // On mobile screens, automatically navigate to the terminal view so output is visible
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setMobileTab('terminal');
+    }
+
     try {
       const result = await executeRustCode(currentCode, currentExercise.mode);
       setLastResult(result);
@@ -271,10 +290,11 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
       const key = e.key.toLowerCase();
 
       const isAnyModalOpen =
-        showCommandPalette || showSettingsModal || showSolutionModal || showResetModal;
+        showCommandPalette || showSettingsModal || showSolutionModal || showResetModal || mobileSidebarOpen;
 
-      // If Escape is pressed, dismiss any open modal
+      // If Escape is pressed, dismiss any open modal / drawer
       if (e.key === 'Escape') {
+        if (mobileSidebarOpen) setMobileSidebarOpen(false);
         if (showCommandPalette) setShowCommandPalette(false);
         if (showSettingsModal) setShowSettingsModal(false);
         if (showSolutionModal) setShowSolutionModal(false);
@@ -351,6 +371,7 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     showSettingsModal,
     showSolutionModal,
     showResetModal,
+    mobileSidebarOpen,
   ]);
 
   const value: RustlingsContextValue = {
@@ -386,6 +407,11 @@ export function RustlingsProvider({ children }: { children: React.ReactNode }) {
     terminalCollapsed,
     setTerminalCollapsed,
     toggleTerminal,
+    mobileTab,
+    setMobileTab,
+    mobileSidebarOpen,
+    setMobileSidebarOpen,
+    toggleMobileSidebar,
     getShortcut,
     showCommandPalette,
     setShowCommandPalette,
