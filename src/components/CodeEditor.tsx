@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
 import {
   FileCode,
@@ -41,6 +41,17 @@ export const CodeEditor: React.FC = () => {
   const { isKeyboardOpen, viewportHeight, dismissKeyboard } = useKeyboardViewport();
   const editorRef = useRef<any>(null);
   const lastSymbolActionRef = useRef<number>(0);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Re-layout and keep active cursor visible whenever viewport changes (e.g. mobile keyboard toggles)
   useEffect(() => {
@@ -255,16 +266,26 @@ export const CodeEditor: React.FC = () => {
             tabSize: 4,
             insertSpaces: true,
             lineNumbers: 'on',
+            lineNumbersMinChars: isMobile ? 2 : 3,
+            lineDecorationsWidth: isMobile ? 0 : 6,
+            glyphMargin: false,
+            folding: !isMobile,
             minimap: { enabled: false },
             wordWrap: 'on',
             scrollBeyondLastLine: false,
             smoothScrolling: true,
             cursorBlinking: 'smooth',
             cursorSmoothCaretAnimation: 'on',
-            padding: { top: 12, bottom: 12 },
+            padding: { top: isMobile ? 8 : 12, bottom: isMobile ? 8 : 12 },
             renderLineHighlight: 'line',
             automaticLayout: true,
             bracketPairColorization: { enabled: true },
+            overviewRulerLanes: 0,
+            hideCursorInOverviewRuler: true,
+            scrollbar: {
+              verticalScrollbarSize: isMobile ? 4 : 8,
+              horizontalScrollbarSize: isMobile ? 4 : 8,
+            },
           }}
           loading={
             <div className="flex items-center justify-center h-full text-xs text-zinc-400 gap-2">
