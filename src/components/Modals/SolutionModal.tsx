@@ -37,7 +37,7 @@ export const SolutionModal: React.FC = () => {
       onClose={handleClose}
       title={
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-orange-400" />
+          <Sparkles className="w-4 h-4 text-zinc-400" />
           <span>Solution: {currentExercise.title}</span>
         </div>
       }
@@ -46,21 +46,21 @@ export const SolutionModal: React.FC = () => {
     >
       {!confirmed ? (
         <div className="space-y-4 py-2">
-          <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-800/40 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <h4 className="text-xs font-semibold text-amber-200">
-                Are you sure you want to see the solution?
+              <h4 className="text-xs font-semibold text-zinc-200">
+                Reveal solution?
               </h4>
-              <p className="text-xs text-amber-300/80 leading-relaxed">
-                Solving the exercises yourself gives the deepest learning. Have you tried checking the hint tab first?
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Solving the exercises yourself gives the deepest learning. Have you tried checking the hints tab first?
               </p>
             </div>
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button variant="ghost" size="sm" onClick={handleClose}>
-              Go back and try
+              Go back
             </Button>
             <Button
               variant="primary"
@@ -72,7 +72,7 @@ export const SolutionModal: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="relative">
             <pre className="p-3.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono text-zinc-200 overflow-x-auto max-h-96 select-text leading-relaxed">
               {currentExercise.solutionCode}
@@ -85,12 +85,12 @@ export const SolutionModal: React.FC = () => {
             >
               {copied ? (
                 <>
-                  <Check className="w-3 h-3 text-emerald-400" />
+                  <Check className="w-3 h-3 text-zinc-200" />
                   <span>Copied</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3 h-3" />
+                  <Copy className="w-3 h-3 text-zinc-400" />
                   <span>Copy</span>
                 </>
               )}
@@ -98,7 +98,7 @@ export const SolutionModal: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60">
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-[11px] text-zinc-500">
               Apply this solution to test it directly in your editor.
             </p>
             <div className="flex items-center gap-2">
