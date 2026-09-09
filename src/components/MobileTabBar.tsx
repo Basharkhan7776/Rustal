@@ -24,13 +24,20 @@ const TABS: TabItem[] = [
   { id: 'solution', label: 'Solution', icon: Sparkles },
 ];
 
-export const MobileTabBar: React.FC = () => {
+export interface MobileTabBarProps {
+  hidden?: boolean;
+}
+
+export const MobileTabBar: React.FC<MobileTabBarProps> = ({ hidden = false }) => {
   const { mobileTab, setMobileTab, isRunning, lastResult } = useRustlings();
 
   return (
     <nav
       aria-label="Mobile Navigation"
-      className="fixed bottom-0 inset-x-0 z-30 bg-[#09090b]/95 backdrop-blur-md border-t border-zinc-800/80 md:hidden pb-[max(env(safe-area-inset-bottom),0.375rem)] pt-1 px-1.5"
+      className={cn(
+        'fixed bottom-0 inset-x-0 z-30 bg-[#09090b]/95 backdrop-blur-md border-t border-zinc-800/80 md:hidden pb-[max(env(safe-area-inset-bottom),0.375rem)] pt-1 px-1.5 transition-all duration-200 ease-out',
+        hidden && 'translate-y-full opacity-0 pointer-events-none'
+      )}
     >
       <div className="grid grid-cols-5 gap-1">
         {TABS.map(tab => {

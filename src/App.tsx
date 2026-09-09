@@ -11,6 +11,8 @@ import { CommandPalette } from './components/CommandPalette';
 import { SolutionModal } from './components/Modals/SolutionModal';
 import { SettingsModal } from './components/Modals/SettingsModal';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
+import { useKeyboardViewport } from './hooks/useKeyboardViewport';
+import { cn } from './lib/utils';
 
 const PANEL_STORAGE_KEY = 'rustal_v1_panel_sizes';
 
@@ -44,8 +46,20 @@ const AppContent: React.FC = () => {
     toggleTerminal,
     mobileTab,
   } = useRustlings();
+  const { isKeyboardOpen, viewportHeight } = useKeyboardViewport();
   const [panelSizes, setPanelSizes] = useState<PanelSizes>(getSavedPanels);
   const startSizesRef = useRef<PanelSizes>(panelSizes);
+  const [isMobileScreen, setIsMobileScreen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     try {
@@ -85,7 +99,12 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased font-sans">
+    <div
+      style={{
+        height: isMobileScreen ? `${viewportHeight}px` : undefined,
+      }}
+      className="flex flex-col h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 antialiased font-sans"
+    >
       {/* Top Header Navbar */}
       <Header />
 
@@ -142,7 +161,12 @@ const AppContent: React.FC = () => {
       </div>
 
       {/* Mobile Workspace: 5-Section Single-View (< 768px) */}
-      <div className="flex md:hidden flex-1 flex-col min-h-0 overflow-hidden relative pb-[56px]">
+      <div
+        className={cn(
+          'flex md:hidden flex-1 flex-col min-h-0 overflow-hidden relative',
+          isKeyboardOpen ? 'pb-0' : 'pb-[56px]'
+        )}
+      >
         <div className="flex-1 flex min-h-0 overflow-hidden">
           {mobileTab === 'code' && <CodeEditor />}
           {mobileTab === 'terminal' && (
@@ -165,7 +189,7 @@ const AppContent: React.FC = () => {
         </div>
 
         {/* Bottom 5-Section Navigation Bar */}
-        <MobileTabBar />
+        <MobileTabBar hidden={isKeyboardOpen} />
       </div>
 
       {/* Mobile Slide-Out Drawer Overlay */}

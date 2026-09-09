@@ -1,9 +1,24 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
-import { FileCode, Check, RotateCcw, Play, Loader2, ZoomIn, ZoomOut } from 'lucide-react';
+import {
+  FileCode,
+  Check,
+  RotateCcw,
+  Play,
+  Loader2,
+  ZoomIn,
+  ZoomOut,
+  Keyboard,
+  ChevronDown,
+} from 'lucide-react';
 import { useRustlings } from '../context/RustlingsContext';
+import { useKeyboardViewport } from '../hooks/useKeyboardViewport';
 import { Button } from './ui/Button';
 import { Tooltip } from './ui/Tooltip';
+
+const RUST_SYMBOLS = [
+  '{', '}', '(', ')', '[', ']', ';', '&', '|', '->', '::', '!', '=', '"', '<', '>', '_', 'Tab',
+];
 
 export const CodeEditor: React.FC = () => {
   const {
@@ -23,10 +38,71 @@ export const CodeEditor: React.FC = () => {
     getShortcut,
   } = useRustlings();
 
+  const { isKeyboardOpen, viewportHeight, dismissKeyboard } = useKeyboardViewport();
   const editorRef = useRef<any>(null);
+  const lastSymbolActionRef = useRef<number>(0);
+
+  // Re-layout and keep active cursor visible whenever viewport changes (e.g. mobile keyboard toggles)
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.layout();
+      const pos = editorRef.current.getPosition();
+      if (pos) {
+        editorRef.current.revealPositionInCenterIfOutsideViewport(pos);
+      }
+    }
+  }, [viewportHeight]);
+
+  const handleInsertSymbol = useCallback((symbol: string) => {
+    if (!editorRef.current) return;
+    const editor = editorRef.current;
+
+    let selection = editor.getSelection();
+    if (!selection) {
+      const position = editor.getPosition() || { lineNumber: 1, column: 1 };
+      selection = {
+        startLineNumber: position.lineNumber,
+        startColumn: position.column,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column,
+      };
+    }
+
+    const textToInsert = symbol === 'Tab' ? '    ' : symbol;
+
+    editor.executeEdits('quick-symbol', [
+      {
+        range: selection,
+        text: textToInsert,
+        forceMoveMarkers: true,
+      },
+    ]);
+    editor.pushUndoStop();
+    editor.focus();
+
+    const newPos = editor.getPosition();
+    if (newPos) {
+      editor.revealPositionInCenterIfOutsideViewport(newPos);
+    }
+  }, []);
+
+  const triggerSymbol = useCallback((e: React.SyntheticEvent, sym: string) => {
+    e.preventDefault();
+    const now = Date.now();
+    if (now - lastSymbolActionRef.current < 120) return;
+    lastSymbolActionRef.current = now;
+    handleInsertSymbol(sym);
+  }, [handleInsertSymbol]);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+
+    // Keep cursor visible when typing on mobile screens
+    editor.onDidChangeCursorPosition(e => {
+      if (window.innerWidth < 768) {
+        editor.revealPositionInCenterIfOutsideViewport(e.position);
+      }
+    });
 
     // Define custom coss.com dark theme
     monaco.editor.defineTheme('coss-dark', {
@@ -99,7 +175,7 @@ export const CodeEditor: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#09090b] overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 h-full bg-[#09090b] overflow-hidden">
       {/* Editor Header Bar */}
       <div className="h-9 px-3 border-b border-zinc-800/80 bg-[#0c0c0f] flex items-center justify-between text-xs text-zinc-400 select-none shrink-0">
         <div className="flex items-center gap-2 truncate">
@@ -165,7 +241,7 @@ export const CodeEditor: React.FC = () => {
       </div>
 
       {/* Monaco Editor Container */}
-      <div className="flex-1 w-full h-full relative">
+      <div className="flex-1 min-h-0 w-full relative">
         <Editor
           height="100%"
           language="rust"
@@ -198,6 +274,38 @@ export const CodeEditor: React.FC = () => {
           }
         />
       </div>
+
+      {/* Mobile Quick Symbol Accessory Bar (visible when virtual keyboard is active) */}
+      {isKeyboardOpen && (
+        <div className="md:hidden shrink-0 h-9 bg-[#121215] border-t border-zinc-800/80 flex items-center px-1.5 gap-1 overflow-x-auto no-scrollbar select-none z-20">
+          <button
+            type="button"
+            onPointerDown={e => {
+              e.preventDefault();
+              dismissKeyboard();
+            }}
+            onClick={dismissKeyboard}
+            className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-zinc-300 hover:text-zinc-100 text-xs font-medium border border-zinc-700/60 mr-1 cursor-pointer transition-colors"
+            title="Dismiss keyboard"
+            aria-label="Dismiss keyboard"
+          >
+            <Keyboard className="w-3.5 h-3.5 text-zinc-400" />
+            <ChevronDown className="w-3 h-3 text-zinc-400" />
+          </button>
+          <div className="h-4 w-px bg-zinc-800 shrink-0 mr-0.5" />
+          {RUST_SYMBOLS.map(sym => (
+            <button
+              key={sym}
+              type="button"
+              onPointerDown={e => triggerSymbol(e, sym)}
+              onClick={e => triggerSymbol(e, sym)}
+              className="shrink-0 min-w-[30px] h-7 px-2 flex items-center justify-center font-mono text-xs font-medium rounded bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-700 text-zinc-200 border border-zinc-800 hover:border-zinc-700 cursor-pointer select-none transition-colors"
+            >
+              {sym}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
