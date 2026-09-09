@@ -38,15 +38,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     getShortcut,
   } = useRustlings();
 
-  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(() => {
-    return { [currentExercise.category]: true };
-  });
+  // Open only one accordion category at a time, else close all
+  const [prevExerciseCategory, setPrevExerciseCategory] = useState(currentExercise.category);
+  const [openCategory, setOpenCategory] = useState<string | null>(() => currentExercise.category);
 
-  const toggleCategory = (cat: string) => {
-    setOpenCategories(prev => ({
-      ...prev,
-      [cat]: !prev[cat],
-    }));
+  // When current exercise changes (Next/Prev/Search), automatically sync the open accordion category
+  if (prevExerciseCategory !== currentExercise.category) {
+    setPrevExerciseCategory(currentExercise.category);
+    setOpenCategory(currentExercise.category);
+  }
+
+  const toggleCategory = (catId: string) => {
+    setOpenCategory(prev => ((prev ?? effectiveOpenCategory) === catId ? null : catId));
   };
 
   const categories = useMemo(() => {
@@ -96,6 +99,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       })
       .filter(cat => cat.exercises.length > 0);
   }, [categories, searchQuery, filter, completedIds, bookmarkedIds]);
+
+  // If user is searching and currently open category has no matches, focus on the first matching category
+  let effectiveOpenCategory = openCategory;
+  if (searchQuery.trim() && filteredCategories.length > 0) {
+    const hasMatch = filteredCategories.some(
+      c => c.id === openCategory && c.exercises.length > 0
+    );
+    if (!hasMatch) {
+      const firstMatch = filteredCategories.find(c => c.exercises.length > 0);
+      effectiveOpenCategory = firstMatch ? firstMatch.id : openCategory;
+    }
+  }
 
   if (collapsed) {
     return (
@@ -223,7 +238,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         ) : (
           filteredCategories.map(cat => {
-            const isOpen = openCategories[cat.id] ?? true;
+            const isOpen = effectiveOpenCategory === cat.id;
             const completedInCat = cat.exercises.filter(e => completedIds.has(e.id)).length;
             const isCatAllDone = completedInCat === cat.exercises.length && cat.exercises.length > 0;
 
@@ -303,7 +318,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Footer */}
       <div className="p-2.5 border-t border-zinc-800/80 bg-zinc-950/40 text-[11px] text-zinc-500 flex items-center justify-between">
-        <span>Press <kbd className="px-1 py-0.2 text-[10px] font-mono bg-zinc-850 text-zinc-400 rounded border border-zinc-800">⌘K</kbd> to quick switch</span>
+        <span>Press <kbd className="px-1 py-0.2 text-[10px] font-mono bg-zinc-850 text-zinc-400 rounded border border-zinc-800">{getShortcut('⌘K', 'Ctrl+K')}</kbd> to quick switch</span>
         <span className="font-mono">{completedIds.size}/{exercises.length}</span>
       </div>
     </aside>
