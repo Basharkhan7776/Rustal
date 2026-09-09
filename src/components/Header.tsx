@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   Bookmark,
   Loader2,
-  PanelLeft,
   Terminal,
 } from 'lucide-react';
 import { useRustlings } from '../context/RustlingsContext';
@@ -31,8 +30,6 @@ export const Header: React.FC = () => {
     bookmarkedIds,
     toggleBookmark,
     resetCurrentCode,
-    sidebarCollapsed,
-    toggleSidebar,
     terminalCollapsed,
     toggleTerminal,
     getShortcut,
@@ -48,21 +45,7 @@ export const Header: React.FC = () => {
   return (
     <header className="h-12 border-b border-zinc-800/80 bg-[#09090b] px-3 flex items-center justify-between gap-4 select-none shrink-0 z-20">
       {/* Left branding & current exercise info */}
-      <div className="flex items-center gap-2 min-w-0">
-        <Tooltip
-          content={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          shortcut={getShortcut('⌘B', 'Ctrl+B')}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="h-8 w-8 text-zinc-400 hover:text-zinc-100"
-          >
-            <PanelLeft className="w-4 h-4 text-zinc-400" />
-          </Button>
-        </Tooltip>
-
+      <div className="flex items-center gap-3 min-w-0">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 font-bold text-xs">
             🦀
